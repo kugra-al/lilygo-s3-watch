@@ -38,11 +38,12 @@ typedef struct {
     char hours[8], minutes[8];
 } alarm_t;
 
-// Fix this. It blocks time updating until wifi connects. Plus it's a mess with the while loop
 static void check_wifi()
 {
+    Serial.println("Wifi check");
     if (WiFi.status() != WL_CONNECTED) {
         lv_style_set_text_color(&style_wifi, color_red);
+        Serial.println("Attempting wifi connect");
         WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     } else {
         wifi_connected = true;
@@ -96,6 +97,8 @@ void loop()
         update_time();
         if (current_screen == CLOCK_SCREEN)
             update_date();
+        if (alarm_running)
+            alarm_sound();
     }
     if (millis() - last_status_check >= FIVE_SECONDS) {
         last_status_check = millis();
@@ -103,7 +106,10 @@ void loop()
         refresh_screen_headers();
     }
     if (millis() - last_wifi_check >= ONE_MINUTE) {
+        last_wifi_check = millis();
         check_wifi();
+        if (alarm_running)
+            alarm_running = false;
     }
     if (millis() - last_weather_check >= THIRTY_MINUTES || (!last_weather_check && WiFi.status() == WL_CONNECTED)) {
         last_weather_check = millis();

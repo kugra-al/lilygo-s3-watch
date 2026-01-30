@@ -16,6 +16,7 @@ lv_obj_t *wifi_status_label, *power_status_label;
 lv_obj_t *alarm_time_label, *alarm_hours_roller, *alarm_minutes_roller;
 
 int current_screen = CLOCK_SCREEN;
+bool alarm_running = false;
 
 static void clock_btn_event_cb(lv_event_t *e)
 {
@@ -29,10 +30,8 @@ static void clock_btn_event_cb(lv_event_t *e)
 }
 
 void alarm_sound() {
-  // Update label as before
-  
-  // Beep: 1kHz tone, 500ms, 50% duty
-    
+    instance.drv.setWaveform(0, 113);
+    instance.drv.run();
 }
 
 void update_date() 
@@ -226,7 +225,7 @@ void alarm_btn_event_cb(lv_event_t *e)
         lv_roller_get_selected_str(alarm_minutes_roller, minutesBuf, sizeof(minutesBuf));
         snprintf(timeBuf, sizeof(timeBuf), "%s:%s", hoursBuf, minutesBuf);
         lv_label_set_text(alarm_time_label, timeBuf);
-        alarm_sound();
+        alarm_running = true;
     }
 }
 

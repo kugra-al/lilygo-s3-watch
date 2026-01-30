@@ -6,14 +6,14 @@ extern lv_obj_t *wifi_status_label, *power_status_label;
 extern lv_obj_t *alarm_time_label, *alarm_hours_roller, *alarm_minutes_roller;
 
 extern int current_screen;
+extern bool alarm_running;
+
 static lv_obj_t *screens[3];
 #define NUM_SCREENS (sizeof(screens) / sizeof(screens[0]))
 
 #define CLOCK_SCREEN 0
 #define STATUS_SCREEN 1
 #define ALARM_SCREEN 2
-
-#define BUZZER_PIN 46  // Speaker data pin (or test GPIO4/5)
 
 void draw_clock_screen();
 void draw_status_screen();
@@ -27,3 +27,4 @@ void update_date();
 void refresh_screen_headers();
 void update_weather();
 void update_battery_percent();
+void alarm_sound();
