@@ -38,8 +38,6 @@ typedef struct {
     char hours[8], minutes[8];
 } alarm_t;
 
-
-
 // Fix this. It blocks time updating until wifi connects. Plus it's a mess with the while loop
 static void check_wifi()
 {

@@ -13,6 +13,8 @@ static lv_obj_t *screens[3];
 #define STATUS_SCREEN 1
 #define ALARM_SCREEN 2
 
+#define BUZZER_PIN 46  // Speaker data pin (or test GPIO4/5)
+
 void draw_clock_screen();
 void draw_status_screen();
 void draw_alarm_screen();

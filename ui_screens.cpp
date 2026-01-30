@@ -28,6 +28,13 @@ static void clock_btn_event_cb(lv_event_t *e)
     }
 }
 
+void alarm_sound() {
+  // Update label as before
+  
+  // Beep: 1kHz tone, 500ms, 50% duty
+    
+}
+
 void update_date() 
 {
     struct tm timeinfo;
@@ -219,6 +226,7 @@ void alarm_btn_event_cb(lv_event_t *e)
         lv_roller_get_selected_str(alarm_minutes_roller, minutesBuf, sizeof(minutesBuf));
         snprintf(timeBuf, sizeof(timeBuf), "%s:%s", hoursBuf, minutesBuf);
         lv_label_set_text(alarm_time_label, timeBuf);
+        alarm_sound();
     }
 }
 
