@@ -1,0 +1,1 @@
+A simple watch face designed for the Lilgo T-Watch S3 Plus
