@@ -7,9 +7,16 @@ extern lv_obj_t *alarm_time_label, *alarm_hours_roller, *alarm_minutes_roller;
 extern lv_obj_t *popup;
 
 extern int current_screen;
-extern bool alarm_running;
-extern int alarm_start_time;
 
+typedef struct {
+    int hour;
+    int minute;
+    bool running = false;
+    bool set = false;
+    int end_time = 0;
+} alarm_cfg_t;
+
+extern alarm_cfg_t ui_alarm;
 static lv_obj_t *screens[3];
 #define NUM_SCREENS (sizeof(screens) / sizeof(screens[0]))
 

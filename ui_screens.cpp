@@ -7,6 +7,7 @@
 #include "ui_base.h"
 #include "ui_screens.h"
 #include "config.h"
+#include "watch.h"
 
 lv_obj_t *time_label, *time_label_2;
 lv_obj_t *date_label, *outside_weather, *sun_status;
@@ -17,8 +18,7 @@ lv_obj_t *alarm_time_label, *alarm_hours_roller, *alarm_minutes_roller;
 lv_obj_t *popup;
 
 int current_screen = CLOCK_SCREEN;
-bool alarm_running = false;
-int alarm_start_time;
+alarm_cfg_t ui_alarm = {0, 0, false, false, 0};
 
 static void clock_btn_event_cb(lv_event_t *e)
 {
@@ -43,15 +43,16 @@ static void alarm_stop_btn_cb(lv_event_t *e)
 
 void alarm_start()
 {
-    alarm_running = true;
-    alarm_start_time = millis();
+    ui_alarm.running = true;
+    ui_alarm.end_time = millis()+ONE_MINUTE;
     init_popup("Alarm", "Stop", alarm_stop_btn_cb);
 }
 
 void alarm_stop()
 {
-    alarm_start_time = 0;
-    alarm_running = false;
+    ui_alarm.end_time = 0;
+    ui_alarm.running = false;
+    ui_alarm.set = false;
     lv_obj_add_flag(popup, LV_OBJ_FLAG_HIDDEN);
 }
 
@@ -110,6 +111,19 @@ void update_time()
     }
     else
         lv_label_set_text(time_label_2, time_cacheBuf);
+    if (ui_alarm.set) {
+        if (!ui_alarm.running) {
+            if (timeinfo.tm_hour == ui_alarm.hour && timeinfo.tm_min == ui_alarm.minute) {
+                alarm_start();
+            }
+        } else {
+            if (ui_alarm.end_time-millis() >= ONE_MINUTE) {
+                alarm_stop();
+            } else {
+                alarm_alert();
+            }
+        }
+    }
 }
 
 void update_battery_percent()
@@ -260,7 +274,9 @@ void alarm_btn_event_cb(lv_event_t *e)
         lv_roller_get_selected_str(alarm_minutes_roller, minutesBuf, sizeof(minutesBuf));
         snprintf(timeBuf, sizeof(timeBuf), "%s:%s", hoursBuf, minutesBuf);
         lv_label_set_text(alarm_time_label, timeBuf);
-        alarm_start();
+        ui_alarm.hour = atoi(hoursBuf);
+        ui_alarm.minute = atoi(minutesBuf);
+        ui_alarm.set = true;
     }
 }
 

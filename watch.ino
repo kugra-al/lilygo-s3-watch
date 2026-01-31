@@ -19,13 +19,7 @@
 #include "ui_base.h"
 #include "cache.h"
 #include "ui_screens.h"
-
-#define ONE_SECOND 1000
-#define FIVE_SECONDS 5000
-#define THIRTY_SECONDS 30000
-#define ONE_MINUTE 60000
-#define THIRTY_MINUTES 1800000
-#define TWELVE_HOURS 43200000
+#include "watch.h"
 
 const char* ntpServer = "pool.ntp.org";  // European pool
 
@@ -97,12 +91,6 @@ void loop()
         update_time();
         if (current_screen == CLOCK_SCREEN)
             update_date();
-        if (alarm_running) {
-            if (alarm_start_time >= ONE_MINUTE) {
-                alarm_stop();
-            } else
-                alarm_alert();
-        }
     }
     if (current_millis - last_status_check >= FIVE_SECONDS) {
         last_status_check = current_millis;
@@ -112,8 +100,6 @@ void loop()
     if (current_millis - last_wifi_check >= ONE_MINUTE) {
         last_wifi_check = current_millis;
         check_wifi();
-        if (alarm_running)
-            alarm_running = false;
     }
     if (current_millis - last_weather_check >= THIRTY_MINUTES || (!last_weather_check && WiFi.status() == WL_CONNECTED)) {
         last_weather_check = current_millis;
