@@ -1,6 +1,7 @@
 #include <lvgl.h>
 #include "ui_base.h"
 #include "cache.h"
+#include "ui_screens.h"
 
 lv_style_t style_default;           
 lv_style_t style_default_medium;
@@ -104,4 +105,18 @@ lv_obj_t *ui_add_button(char *cache_key, char *default_text, lv_obj_t *align_to_
     lv_obj_add_style(btn_label, style, LV_PART_MAIN);
 
     return btn;
+}
+
+lv_obj_t *init_popup(char *label_text, char *btn_text, void (*callback)(lv_event_t *))
+{
+    lv_obj_clear_flag(popup, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_t *label = lv_label_create(popup);        /*Add a label the current screen*/
+    lv_label_set_text(label, String(label_text).c_str()); 
+    lv_obj_add_style(label, &style_default_small, LV_PART_MAIN);
+    if (callback) {
+        align_cfg_t btn_align = {50, 40, LV_ALIGN_BOTTOM_MID, LV_TEXT_ALIGN_AUTO};
+        size_cfg_t btn_size = {35, 100};
+        ui_add_button(NULL, btn_text, label, &style_default_small, callback, &btn_align, &btn_size, popup);
+    }
+    return popup;
 }

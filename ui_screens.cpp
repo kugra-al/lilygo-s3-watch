@@ -14,9 +14,11 @@ lv_obj_t *status_label;
 lv_obj_t *wifi_label, *battery_label, *charge_label, *bluetooth_label, *gps_label;
 lv_obj_t *wifi_status_label, *power_status_label;
 lv_obj_t *alarm_time_label, *alarm_hours_roller, *alarm_minutes_roller;
+lv_obj_t *popup;
 
 int current_screen = CLOCK_SCREEN;
 bool alarm_running = false;
+int alarm_start_time;
 
 static void clock_btn_event_cb(lv_event_t *e)
 {
@@ -29,7 +31,31 @@ static void clock_btn_event_cb(lv_event_t *e)
     }
 }
 
-void alarm_sound() {
+static void alarm_stop_btn_cb(lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t *btn = lv_event_get_target_obj(e);
+    if (code == LV_EVENT_CLICKED) {
+        lv_obj_t *label = lv_obj_get_child(btn, 0);
+        alarm_stop();
+    }
+}
+
+void alarm_start()
+{
+    alarm_running = true;
+    alarm_start_time = millis();
+    init_popup("Alarm", "Stop", alarm_stop_btn_cb);
+}
+
+void alarm_stop()
+{
+    alarm_start_time = 0;
+    alarm_running = false;
+    lv_obj_add_flag(popup, LV_OBJ_FLAG_HIDDEN);
+}
+
+void alarm_alert() {
     instance.drv.setWaveform(0, 113);
     instance.drv.run();
 }
@@ -208,7 +234,16 @@ void draw_screen_headers()
     
     aligns = {0, 0, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_AUTO};
     time_label_2 = ui_add_aligned_label("time_2", "--:--:--", NULL, &style_default_medium, &aligns, NULL, header);
-    refresh_screen_headers(); 
+    refresh_screen_headers();
+
+    popup = lv_obj_create(lv_layer_top());
+    lv_obj_set_size(popup, 200, 80); 
+    lv_obj_set_style_bg_color(popup, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_border_width(popup, 1, LV_PART_MAIN);
+    lv_obj_set_style_border_color(popup, color_default, LV_PART_MAIN);  // Border in default_color
+    lv_obj_clear_flag(popup, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_align_to(popup, header, LV_ALIGN_OUT_BOTTOM_MID, 0, 20);
+    lv_obj_add_flag(popup, LV_OBJ_FLAG_HIDDEN);
 }
 
 void alarm_btn_event_cb(lv_event_t *e)
@@ -225,7 +260,7 @@ void alarm_btn_event_cb(lv_event_t *e)
         lv_roller_get_selected_str(alarm_minutes_roller, minutesBuf, sizeof(minutesBuf));
         snprintf(timeBuf, sizeof(timeBuf), "%s:%s", hoursBuf, minutesBuf);
         lv_label_set_text(alarm_time_label, timeBuf);
-        alarm_running = true;
+        alarm_start();
     }
 }
 

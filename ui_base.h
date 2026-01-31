@@ -33,3 +33,4 @@ void init_styles();
 lv_obj_t *ui_add_aligned_label(char *cache_key, char *default_text, lv_obj_t *align_to_obj, lv_style_t *style, align_cfg_t *aligns, size_cfg_t *sizes, lv_obj_t *screen);
 lv_obj_t *ui_add_button(char *cache_key, char *default_text, lv_obj_t *align_to_obj, lv_style_t *style, void (*callback)(lv_event_t *), 
   align_cfg_t *aligns, size_cfg_t *sizes, lv_obj_t *screen);
+lv_obj_t *init_popup(char *label_text, char *btn_text, void (*callback)(lv_event_t *));

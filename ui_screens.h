@@ -4,9 +4,11 @@ extern lv_obj_t *status_label;
 extern lv_obj_t *wifi_label, *battery_label, *charge_label, *bluetooth_label, *gps_label;
 extern lv_obj_t *wifi_status_label, *power_status_label;
 extern lv_obj_t *alarm_time_label, *alarm_hours_roller, *alarm_minutes_roller;
+extern lv_obj_t *popup;
 
 extern int current_screen;
 extern bool alarm_running;
+extern int alarm_start_time;
 
 static lv_obj_t *screens[3];
 #define NUM_SCREENS (sizeof(screens) / sizeof(screens[0]))
@@ -27,4 +29,6 @@ void update_date();
 void refresh_screen_headers();
 void update_weather();
 void update_battery_percent();
-void alarm_sound();
+void alarm_alert();
+void alarm_start();
+void alarm_stop();

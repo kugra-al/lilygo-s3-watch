@@ -90,29 +90,33 @@ void setup()
 void loop()
 {
     lv_timer_handler();
-
+    int current_millis = millis();
     // simple check for seconds (change to use lv_timer later)
-    if (millis() - last_millis >= ONE_SECOND) {
-        last_millis = millis();
+    if (current_millis - last_millis >= ONE_SECOND) {
+        last_millis = current_millis;
         update_time();
         if (current_screen == CLOCK_SCREEN)
             update_date();
-        if (alarm_running)
-            alarm_sound();
+        if (alarm_running) {
+            if (alarm_start_time >= ONE_MINUTE) {
+                alarm_stop();
+            } else
+                alarm_alert();
+        }
     }
-    if (millis() - last_status_check >= FIVE_SECONDS) {
-        last_status_check = millis();
+    if (current_millis - last_status_check >= FIVE_SECONDS) {
+        last_status_check = current_millis;
         update_battery_percent();
         refresh_screen_headers();
     }
-    if (millis() - last_wifi_check >= ONE_MINUTE) {
-        last_wifi_check = millis();
+    if (current_millis - last_wifi_check >= ONE_MINUTE) {
+        last_wifi_check = current_millis;
         check_wifi();
         if (alarm_running)
             alarm_running = false;
     }
-    if (millis() - last_weather_check >= THIRTY_MINUTES || (!last_weather_check && WiFi.status() == WL_CONNECTED)) {
-        last_weather_check = millis();
+    if (current_millis - last_weather_check >= THIRTY_MINUTES || (!last_weather_check && WiFi.status() == WL_CONNECTED)) {
+        last_weather_check = current_millis;
         if (current_screen == CLOCK_SCREEN) {
             update_weather();
         }        
