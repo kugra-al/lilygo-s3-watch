@@ -1,3 +1,4 @@
+#include "misc/lv_area.h"
 #include <lvgl.h>
 #include <LilyGoLib.h>
 #include <HTTPClient.h>
@@ -282,7 +283,20 @@ void alarm_btn_event_cb(lv_event_t *e)
         ui_alarm.hour = atoi(hoursBuf);
         ui_alarm.minute = atoi(minutesBuf);
         ui_alarm.set = true;
+        put_int_key_value("ui_alarm_hour", ui_alarm.hour);
+        put_int_key_value("ui_alarm_min", ui_alarm.minute);
+        put_bool_key_value("ui_alarm_set", ui_alarm.set);
     }
+}
+
+void alarm_cancel_btn_event_cb(lv_event_t *e) 
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t *btn = lv_event_get_target_obj(e);
+    if (code == LV_EVENT_CLICKED) {
+        ui_alarm.set = false;  
+        put_bool_key_value("ui_alarm_set", ui_alarm.set);
+    }  
 }
 
 void alarm_time_change_event_handler(lv_event_t *e) 
@@ -319,15 +333,21 @@ void draw_alarm_screen()
     lv_roller_set_options(alarm_minutes_roller, minute_opts, LV_ROLLER_MODE_INFINITE);
     lv_roller_set_visible_row_count(alarm_minutes_roller, 3);
     lv_obj_add_event_cb(alarm_minutes_roller, alarm_time_change_event_handler, LV_EVENT_VALUE_CHANGED, NULL);
-    
+
+    static align_cfg_t aligns = {0, -5, LV_ALIGN_OUT_TOP_RIGHT, LV_TEXT_ALIGN_CENTER};
+    static size_cfg_t alarm_label_size = {20, 150};
+    alarm_time_label = ui_add_aligned_label(NULL, "Alarm time", alarm_minutes_roller, 
+        &style_default_medium, &aligns, &alarm_label_size, screen);
+    lv_label_set_text_fmt(alarm_time_label, "%02d:%02d", get_int_key_value("ui_alarm_hour", 0), get_int_key_value("ui_alarm_min", 0));
+
     align_cfg_t btn_align = {0, 120, LV_ALIGN_TOP_MID, LV_TEXT_ALIGN_AUTO};
     size_cfg_t btn_size = {40, 80};
     lv_obj_t *alarm_btn = ui_add_button(NULL, "Set", alarm_hours_roller, &style_default, alarm_btn_event_cb, &btn_align, &btn_size, screen);
+    align_cfg_t cancel_btn_align = {10, 0, LV_ALIGN_OUT_RIGHT_MID, LV_TEXT_ALIGN_AUTO};
+    size_cfg_t cancel_btn_size = {40, 100};
+    lv_obj_t *cancel_alarm_btn = ui_add_button(NULL, "Unset", alarm_btn, &style_default, alarm_cancel_btn_event_cb, &cancel_btn_align, 
+        &cancel_btn_size, screen);
 
-    static align_cfg_t aligns = {50, 5, LV_ALIGN_BOTTOM_LEFT, LV_TEXT_ALIGN_CENTER};
-    static size_cfg_t alarm_label_size = {20, 100};
-    alarm_time_label = ui_add_aligned_label("alarm_time_label", "Alarm time", alarm_btn, 
-        &style_default_medium, &aligns, &alarm_label_size, screen);
     lv_obj_set_scroll_dir(screen, LV_DIR_NONE);
 }
 

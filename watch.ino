@@ -79,6 +79,9 @@ void setup()
     switch_to_screen(CLOCK_SCREEN);
     check_wifi();
     instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
+    ui_alarm.hour = get_int_key_value("ui_alarm_hour", 0);
+    ui_alarm.minute = get_int_key_value("ui_alarm_min", 0);
+    ui_alarm.set = get_bool_key_value("ui_alarm_set", false);
 }
 
 void loop()
