@@ -12,7 +12,7 @@
 lv_obj_t *time_label, *time_label_2;
 lv_obj_t *date_label, *outside_weather, *sun_status;
 lv_obj_t *status_label;
-lv_obj_t *wifi_label, *battery_label, *charge_label, *bluetooth_label, *gps_label;
+lv_obj_t *wifi_label, *battery_label, *charge_label, *bluetooth_label, *gps_label, *alarm_symbol_label;
 lv_obj_t *wifi_status_label, *power_status_label;
 lv_obj_t *alarm_time_label, *alarm_hours_roller, *alarm_minutes_roller;
 lv_obj_t *popup;
@@ -213,14 +213,19 @@ void refresh_screen_headers()
         lv_style_set_text_color(&style_wifi, color_red);
     if (instance.pmu.isCharging()) {
         lv_obj_clear_flag(charge_label, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_align_to(wifi_label, charge_label, LV_ALIGN_TOP_RIGHT, -20, 0);
+        lv_obj_align_to(wifi_label, charge_label, LV_ALIGN_TOP_RIGHT, -15, 0);
     } else {
         lv_obj_add_flag(charge_label, LV_OBJ_FLAG_HIDDEN);
         lv_obj_align_to(wifi_label, battery_label, LV_ALIGN_TOP_RIGHT, -40, 0);
     }
     // These need to be realigned if wifi label changes position
-    lv_obj_align_to(bluetooth_label, wifi_label, LV_ALIGN_TOP_RIGHT, -30, 0);
+    lv_obj_align_to(bluetooth_label, wifi_label, LV_ALIGN_TOP_RIGHT, -25, 0);
     lv_obj_align_to(gps_label, bluetooth_label, LV_ALIGN_TOP_RIGHT, -20, 0);
+    if (ui_alarm.set)
+        lv_obj_add_style(alarm_symbol_label, &style_connected, LV_PART_MAIN);
+    else
+        lv_obj_add_style(alarm_symbol_label, &style_inactive, LV_PART_MAIN);
+    lv_obj_align_to(alarm_symbol_label, gps_label, LV_ALIGN_TOP_RIGHT, -20, 0);
 }
 
 void draw_screen_headers()
@@ -234,20 +239,20 @@ void draw_screen_headers()
 
     static align_cfg_t aligns = {0, 0, LV_ALIGN_TOP_RIGHT, LV_TEXT_ALIGN_AUTO};
 
-    battery_label = ui_add_aligned_label(NULL, "100%", NULL, &style_default_medium, &aligns, NULL, header);
-
-    aligns.x = -45;
-    charge_label = ui_add_aligned_label(NULL, LV_SYMBOL_CHARGE, battery_label, &style_charge, &aligns, NULL, header);
+    battery_label = ui_add_aligned_label(NULL, "100%", NULL, &style_default_small, &aligns, NULL, header);
 
     aligns.x = -40;
+    charge_label = ui_add_aligned_label(NULL, LV_SYMBOL_CHARGE, battery_label, &style_charge, &aligns, NULL, header);
+
+    aligns.x = -30;
     wifi_label = ui_add_aligned_label(NULL, LV_SYMBOL_WIFI, battery_label, &style_wifi, &aligns, NULL, header);
 
-    aligns.x = -20;
+    aligns.x = -10;
     bluetooth_label = ui_add_aligned_label(NULL, LV_SYMBOL_BLUETOOTH, wifi_label, &style_inactive, &aligns, NULL, header);
     gps_label = ui_add_aligned_label(NULL, LV_SYMBOL_GPS, bluetooth_label, &style_inactive, &aligns, NULL, header);
-    
+    alarm_symbol_label = ui_add_aligned_label(NULL, LV_SYMBOL_BELL, gps_label, &style_inactive, &aligns, NULL, header);
     aligns = {0, 0, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_AUTO};
-    time_label_2 = ui_add_aligned_label("time_2", "--:--:--", NULL, &style_default_medium, &aligns, NULL, header);
+    time_label_2 = ui_add_aligned_label("time_2", "--:--:--", NULL, &style_default_small, &aligns, NULL, header);
     refresh_screen_headers();
 
     popup = lv_obj_create(lv_layer_top());

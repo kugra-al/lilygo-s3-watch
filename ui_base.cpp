@@ -32,13 +32,13 @@ void init_styles()
         { &style_default_large, &lv_font_montserrat_36, color_default, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
         { &style_default_medium, &lv_font_montserrat_18, color_default, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
         { &style_default_small, &lv_font_montserrat_16, color_default, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
-        { &style_connected, &lv_font_montserrat_18, color_green, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
-        { &style_inactive, &lv_font_montserrat_18, color_grey, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
-        { &style_disconnected, &lv_font_montserrat_18, color_red, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
+        { &style_connected, &lv_font_montserrat_16, color_green, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
+        { &style_inactive, &lv_font_montserrat_16, color_grey, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
+        { &style_disconnected, &lv_font_montserrat_16, color_red, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
         { &style_roller, &lv_font_montserrat_18, color_default, lv_color_black(), color_default, 1},
         { &style_roller_selected, &lv_font_montserrat_22, lv_color_black(), color_default, lv_color_black(), 1},
-        { &style_charge, &lv_font_montserrat_18, color_yellow, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
-        { &style_wifi, &lv_font_montserrat_18, color_red, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL }
+        { &style_charge, &lv_font_montserrat_16, color_yellow, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
+        { &style_wifi, &lv_font_montserrat_16, color_red, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL }
     };
     
     for (int i = 0; i < sizeof(styles) / sizeof(styles[0]); i++) {
