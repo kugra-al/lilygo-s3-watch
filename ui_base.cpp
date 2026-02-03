@@ -35,8 +35,8 @@ void init_styles()
         { &style_connected, &lv_font_montserrat_16, color_green, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
         { &style_inactive, &lv_font_montserrat_16, color_grey, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
         { &style_disconnected, &lv_font_montserrat_16, color_red, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
-        { &style_roller, &lv_font_montserrat_18, color_default, lv_color_black(), color_default, 1},
-        { &style_roller_selected, &lv_font_montserrat_22, lv_color_black(), color_default, lv_color_black(), 1},
+        { &style_roller, &lv_font_montserrat_16, color_default, lv_color_black(), color_default, 1},
+        { &style_roller_selected, &lv_font_montserrat_18, lv_color_black(), color_default, lv_color_black(), 1},
         { &style_charge, &lv_font_montserrat_16, color_yellow, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
         { &style_wifi, &lv_font_montserrat_16, color_red, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL }
     };
@@ -105,6 +105,15 @@ lv_obj_t *ui_add_button(char *cache_key, char *default_text, lv_obj_t *align_to_
     lv_obj_add_style(btn_label, style, LV_PART_MAIN);
 
     return btn;
+}
+
+lv_obj_t *ui_add_title_label(char *label_text, lv_obj_t *screen)
+{
+    align_cfg_t title_label_align = {0, 45, LV_ALIGN_TOP_MID, LV_TEXT_ALIGN_AUTO};
+    size_cfg_t title_label_size = {50, 180};
+    lv_obj_t *title_label = ui_add_aligned_label(NULL, label_text, NULL, &style_default_large, &title_label_align, 
+        &title_label_size, screen);
+    return title_label;
 }
 
 lv_obj_t *init_popup(char *label_text, char *btn_text, void (*callback)(lv_event_t *))

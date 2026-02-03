@@ -12,7 +12,6 @@
 
 lv_obj_t *time_label, *time_label_2;
 lv_obj_t *date_label, *outside_weather, *sun_status;
-lv_obj_t *status_label;
 lv_obj_t *wifi_label, *battery_label, *charge_label, *bluetooth_label, *gps_label, *alarm_symbol_label;
 lv_obj_t *wifi_status_label, *power_status_label;
 lv_obj_t *alarm_time_label, *alarm_hours_roller, *alarm_minutes_roller;
@@ -278,7 +277,7 @@ void alarm_btn_event_cb(lv_event_t *e)
         char timeBuf[16];
         lv_roller_get_selected_str(alarm_hours_roller, hoursBuf, sizeof(hoursBuf));
         lv_roller_get_selected_str(alarm_minutes_roller, minutesBuf, sizeof(minutesBuf));
-        snprintf(timeBuf, sizeof(timeBuf), "%s:%s", hoursBuf, minutesBuf);
+        snprintf(timeBuf, sizeof(timeBuf), "Alarm time: %s:%s", hoursBuf, minutesBuf);
         lv_label_set_text(alarm_time_label, timeBuf);
         ui_alarm.hour = atoi(hoursBuf);
         ui_alarm.minute = atoi(minutesBuf);
@@ -307,42 +306,44 @@ void alarm_time_change_event_handler(lv_event_t *e)
 void draw_alarm_screen()
 {
     lv_obj_t *screen = screens[ALARM_SCREEN];
-
+    lv_obj_t *alarm_title_label = ui_add_title_label("Alarm", screen);
     alarm_hours_roller = lv_roller_create(screen);
-    lv_obj_set_size(alarm_hours_roller, 60, 100);
+    //lv_obj_set_size(alarm_hours_roller, 60, 80);
     static char hour_opts[200];
-    for(int i = 0; i < 24; i++) {
+    for(int i = 0; i < 23; i++) {
         sprintf(hour_opts + strlen(hour_opts), "%02d\n", i);
     }
+    strcat(hour_opts, "23"); // Add seperate to remove trailing \n
     lv_roller_set_options(alarm_hours_roller, hour_opts, LV_ROLLER_MODE_INFINITE);
     lv_obj_add_style(alarm_hours_roller, &style_roller, LV_PART_MAIN);
     lv_obj_add_style(alarm_hours_roller, &style_roller_selected, LV_PART_SELECTED);
     lv_obj_align(alarm_hours_roller, LV_ALIGN_CENTER, -40, 0);
-    lv_roller_set_visible_row_count(alarm_hours_roller, 3);
+    lv_roller_set_visible_row_count(alarm_hours_roller, 2);
     lv_obj_add_event_cb(alarm_hours_roller, alarm_time_change_event_handler, LV_EVENT_VALUE_CHANGED, NULL);
     
     alarm_minutes_roller = lv_roller_create(screen);
-    lv_obj_set_size(alarm_minutes_roller, 60, 100);
+    //lv_obj_set_size(alarm_minutes_roller, 60, 80);
     lv_obj_add_style(alarm_minutes_roller, &style_roller, LV_PART_MAIN);
     lv_obj_add_style(alarm_minutes_roller, &style_roller_selected, LV_PART_SELECTED);
     lv_obj_align_to(alarm_minutes_roller, alarm_hours_roller, LV_ALIGN_OUT_RIGHT_TOP, 0, 0);
     static char minute_opts[512];
-    for(int i = 0; i < 60; i++) {
+    for(int i = 0; i < 59; i++) {
         sprintf(minute_opts + strlen(minute_opts), "%02d\n", i);
     }
+    strcat(minute_opts, "60");
     lv_roller_set_options(alarm_minutes_roller, minute_opts, LV_ROLLER_MODE_INFINITE);
-    lv_roller_set_visible_row_count(alarm_minutes_roller, 3);
+    lv_roller_set_visible_row_count(alarm_minutes_roller, 2);
     lv_obj_add_event_cb(alarm_minutes_roller, alarm_time_change_event_handler, LV_EVENT_VALUE_CHANGED, NULL);
 
-    static align_cfg_t aligns = {0, -5, LV_ALIGN_OUT_TOP_RIGHT, LV_TEXT_ALIGN_CENTER};
-    static size_cfg_t alarm_label_size = {20, 150};
-    alarm_time_label = ui_add_aligned_label(NULL, "Alarm time", alarm_minutes_roller, 
+    static align_cfg_t aligns = {-30, 10, LV_ALIGN_OUT_BOTTOM_MID, LV_TEXT_ALIGN_CENTER};
+    static size_cfg_t alarm_label_size = {20, 210};
+    alarm_time_label = ui_add_aligned_label(NULL, "Alarm time: 00:00", alarm_minutes_roller, 
         &style_default_medium, &aligns, &alarm_label_size, screen);
-    lv_label_set_text_fmt(alarm_time_label, "%02d:%02d", get_int_key_value("ui_alarm_hour", 0), get_int_key_value("ui_alarm_min", 0));
+    lv_label_set_text_fmt(alarm_time_label, "Alarm time: %02d:%02d", get_int_key_value("ui_alarm_hour", 0), get_int_key_value("ui_alarm_min", 0));
 
-    align_cfg_t btn_align = {0, 120, LV_ALIGN_TOP_MID, LV_TEXT_ALIGN_AUTO};
+    align_cfg_t btn_align = {20, 10, LV_ALIGN_OUT_BOTTOM_LEFT, LV_TEXT_ALIGN_AUTO};
     size_cfg_t btn_size = {40, 80};
-    lv_obj_t *alarm_btn = ui_add_button(NULL, "Set", alarm_hours_roller, &style_default, alarm_btn_event_cb, &btn_align, &btn_size, screen);
+    lv_obj_t *alarm_btn = ui_add_button(NULL, "Set", alarm_time_label, &style_default, alarm_btn_event_cb, &btn_align, &btn_size, screen);
     align_cfg_t cancel_btn_align = {10, 0, LV_ALIGN_OUT_RIGHT_MID, LV_TEXT_ALIGN_AUTO};
     size_cfg_t cancel_btn_size = {40, 100};
     lv_obj_t *cancel_alarm_btn = ui_add_button(NULL, "Unset", alarm_btn, &style_default, alarm_cancel_btn_event_cb, &cancel_btn_align, 
@@ -414,16 +415,13 @@ int get_battery_percent_remaining()
 void draw_status_screen()
 {
     lv_obj_t *screen = screens[STATUS_SCREEN];
-    // Add btn
-    align_cfg_t status_label_align = {0, 45, LV_ALIGN_TOP_MID, LV_TEXT_ALIGN_AUTO};
-    size_cfg_t status_label_size = {70, 180};
-    lv_obj_t *status_label = ui_add_aligned_label(NULL, "Status", NULL, &style_default_large, &status_label_align, &status_label_size, screen);
+    lv_obj_t *status_title_label = ui_add_title_label("Status", screen);
     
     static align_cfg_t aligns = {-20, 5, LV_ALIGN_OUT_BOTTOM_LEFT, LV_TEXT_ALIGN_LEFT};
-    static size_cfg_t wifi_size = {80, 200};
+    static size_cfg_t wifi_size = {60, 200};
     static size_cfg_t battery_size = {20, 200};
-    char wifi_cacheBuf[70] = "Wifi not connected";
-    wifi_status_label = ui_add_aligned_label(NULL, wifi_cacheBuf, status_label, &style_default_small, &aligns, &wifi_size, screen);
+    char wifi_cacheBuf[70] = "SSID: N/A\nLocal IP: N/A\nRouter IP: N/A\n";
+    wifi_status_label = ui_add_aligned_label(NULL, wifi_cacheBuf, status_title_label, &style_default_small, &aligns, &wifi_size, screen);
 
     char battery_cacheBuf[20] = "Battery status";
     aligns.x = 0;
