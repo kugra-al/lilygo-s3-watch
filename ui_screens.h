@@ -5,6 +5,7 @@ extern lv_obj_t *wifi_label, *battery_label, *charge_label, *bluetooth_label, *g
 extern lv_obj_t *wifi_status_label, *power_status_label;
 extern lv_obj_t *alarm_time_label, *alarm_hours_roller, *alarm_minutes_roller;
 extern lv_obj_t *popup;
+extern lv_obj_t *weather_screen_label;
 
 extern int current_screen;
 
@@ -17,16 +18,18 @@ typedef struct {
 } alarm_cfg_t;
 
 extern alarm_cfg_t ui_alarm;
-static lv_obj_t *screens[3];
+static lv_obj_t *screens[4];
 #define NUM_SCREENS (sizeof(screens) / sizeof(screens[0]))
 
 #define CLOCK_SCREEN 0
 #define STATUS_SCREEN 1
-#define ALARM_SCREEN 2
+#define WEATHER_SCREEN 2
+#define ALARM_SCREEN 3
 
 void draw_clock_screen();
 void draw_status_screen();
 void draw_alarm_screen();
+void draw_weather_screen();
 void draw_numpad();
 int get_battery_percent_remaining();
 void init_screens();

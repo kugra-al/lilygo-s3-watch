@@ -1,3 +1,4 @@
+#include "ArduinoJson/Array/JsonArray.hpp"
 #include "misc/lv_area.h"
 #include <lvgl.h>
 #include <LilyGoLib.h>
@@ -16,6 +17,7 @@ lv_obj_t *wifi_label, *battery_label, *charge_label, *bluetooth_label, *gps_labe
 lv_obj_t *wifi_status_label, *power_status_label;
 lv_obj_t *alarm_time_label, *alarm_hours_roller, *alarm_minutes_roller;
 lv_obj_t *popup;
+lv_obj_t *weather_screen_label;
 
 int current_screen = CLOCK_SCREEN;
 alarm_cfg_t ui_alarm = {0, 0, false, false, 0};
@@ -171,7 +173,8 @@ String get_weather_icon(int code)
 void update_weather()
 {
     String url = String("https://api.open-meteo.com/v1/forecast?latitude=")+LATITUDE+
-        "&longitude="+LONGITUDE+"&current_weather=true&daily=sunrise,sunset&timezone=Europe/Vilnius";  
+        "&longitude="+LONGITUDE+"&current_weather=true&daily=sunrise,sunset,weather_code,temperature_2m_max,"+
+        "temperature_2m_min&timezone=Europe/Vilnius&forecast_days=14";  
     HTTPClient http;
     http.begin(url);
     int code = http.GET();
@@ -200,6 +203,22 @@ void update_weather()
                 "Rise: %s Set: %s", sunrise, sunset);
             putStringKV("suntimes", cacheBuf);
             lv_label_set_text(sun_status, cacheBuf);
+            JsonArray timeArr = doc["daily"]["time"];
+            JsonArray tempMinArr = doc["daily"]["temperature_2m_min"];
+            JsonArray tempMaxArr = doc["daily"]["temperature_2m_max"];
+            JsonArray codeArr = doc["daily"]["weather_code"];
+            lv_obj_add_flag(weather_screen_label, LV_OBJ_FLAG_HIDDEN);
+            align_cfg_t weather_align = {0, 25, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_AUTO};
+            for (int i = 0; i < 9; i++) {
+                String timeStr = String(timeArr[i]);
+                float tempMin = tempMinArr[i].as<float>();
+                float tempMax = tempMaxArr[i].as<float>();
+                String code = get_weather_icon(codeArr[i].as<int>());
+                weather_align.y += 20;
+                char textBuf[64];
+                snprintf(textBuf, sizeof(textBuf), "%s %.0fc/%.0fc %s", timeStr.c_str(), tempMax, tempMin, code);
+                lv_obj_t *weather_date = ui_add_aligned_label(NULL, textBuf, NULL, &style_default_small, &weather_align, NULL, screens[WEATHER_SCREEN]);
+            }
         }
     }
     http.end();
@@ -352,6 +371,14 @@ void draw_alarm_screen()
     lv_obj_set_scroll_dir(screen, LV_DIR_NONE);
 }
 
+void draw_weather_screen()
+{
+    lv_obj_t *screen = screens[WEATHER_SCREEN];
+    align_cfg_t aligns = {0, 45, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_AUTO};
+    size_cfg_t sizes = {30, 180};
+    weather_screen_label = ui_add_aligned_label(NULL, "No weather data", NULL, &style_default_small, &aligns, &sizes, screen);
+}
+
 void draw_clock_screen()
 {
     lv_obj_t *screen = screens[CLOCK_SCREEN];
@@ -392,6 +419,7 @@ void init_screens()
 {
     screens[CLOCK_SCREEN] = lv_obj_create(NULL);
     screens[STATUS_SCREEN] = lv_obj_create(NULL);
+    screens[WEATHER_SCREEN] = lv_obj_create(NULL);
     screens[ALARM_SCREEN] = lv_obj_create(NULL);
     for (int i = 0; i < NUM_SCREENS; i++) {
         lv_obj_set_style_bg_color(screens[i], lv_color_black(), LV_PART_MAIN);
@@ -402,6 +430,7 @@ void init_screens()
     draw_clock_screen();
     draw_status_screen();
     draw_alarm_screen();
+    draw_weather_screen();
 }
 
 
