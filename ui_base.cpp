@@ -1,4 +1,5 @@
 #include <lvgl.h>
+extern const lv_font_t weather_icons;
 #include "ui_base.h"
 #include "cache.h"
 #include "ui_screens.h"
@@ -14,6 +15,7 @@ lv_style_t style_roller;
 lv_style_t style_roller_selected;
 lv_style_t style_charge;
 lv_style_t style_wifi;
+lv_style_t style_weather;
 
 void init_styles()
 {
@@ -38,7 +40,8 @@ void init_styles()
         { &style_roller, &lv_font_montserrat_16, color_default, lv_color_black(), color_default, 1},
         { &style_roller_selected, &lv_font_montserrat_18, lv_color_black(), color_default, lv_color_black(), 1},
         { &style_charge, &lv_font_montserrat_16, color_yellow, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
-        { &style_wifi, &lv_font_montserrat_16, color_red, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL }
+        { &style_wifi, &lv_font_montserrat_16, color_red, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
+        { &style_weather, &weather_icons, color_default, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL }
     };
     
     for (int i = 0; i < sizeof(styles) / sizeof(styles[0]); i++) {

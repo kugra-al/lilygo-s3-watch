@@ -11,6 +11,7 @@
 #include "config.h"
 #include "watch.h"
 
+
 lv_obj_t *time_label, *time_label_2;
 lv_obj_t *date_label, *outside_weather, *sun_status;
 lv_obj_t *wifi_label, *battery_label, *charge_label, *bluetooth_label, *gps_label, *alarm_symbol_label;
@@ -153,21 +154,27 @@ String wind_dir_to_text(float deg) {
   return String(dirs[index]);
 }
 
-String get_weather_icon(int code) 
+char *get_weather_icon(int code) 
 {
-    if (code == 0)
-        return "sunny";
-    if (code >= 1 && code <= 19)
-        return "cloudy";
-    if ((code >= 20 && code <= 29) || (code >= 50 && code <= 69))
-        return "some rain";
-    if (code >= 40 && code <= 49)
-        return "foggy";
-    if ((code >= 30 && code <= 39) || (code >= 70 && code <= 78))
-        return "snow";
-    if (code == 79)
-        return "ice";
-    return "rain";
+    if (code >= 0 && code <= 1)
+        return "N"; // Sunny
+    if (code >= 2 && code <= 3)
+        return "C"; // Partly cloudy
+    if (code >= 4 && code <= 48)
+        return "P"; // Cloudy
+    if (code >= 51 && code <= 55 || code == 61 || code >= 80 && code <= 81)
+        return "M"; // Drizzle
+    if (code >= 56 && code <= 57 || code >= 66 && code <= 71 || code >= 85 && code <= 86)
+        return "L"; // Freezing drizzle/light snow
+    if (code >= 63 && code <= 65 || code == 82)
+        return "B"; // Rain
+    if (code >= 73 && code <= 77)
+        return "D"; // Snow
+    if (code == 95)
+        return "A"; // Thunderstorm
+    if (code >= 96 && code <= 99)
+        return "K"; // Thunderstorm with rain
+    return "J";
 }
 
 void update_weather()
@@ -189,14 +196,14 @@ void update_weather()
             String sunrise = doc["daily"]["sunrise"][0];
             String sunset = doc["daily"]["sunset"][0];
             int weatherCode = doc["current_weather"]["weathercode"];
-            String weatherIcon = get_weather_icon(weatherCode);
+           // String weatherIcon = get_weather_icon(weatherCode);
             int tPos = sunrise.indexOf('T');
             sunrise = sunrise.substring(tPos+1, tPos+6);
             sunset = sunset.substring(tPos+1, tPos+6);
             Serial.println("Temp: " + String(temp) + "°C");
             char cacheBuf[128];
             snprintf(cacheBuf, sizeof(cacheBuf),
-                (const char*)"Temp: %.1f°C\nWind: %.1fkm/h %s\nWeather: %s", temp, wind, windDir.c_str(), weatherIcon.c_str());
+                (const char*)"Temp: %.1f°C\nWind: %.1fkm/h %s\nWeather:", temp, wind, windDir.c_str() );
             putStringKV("weather", cacheBuf);
             lv_label_set_text(outside_weather, cacheBuf);    
             snprintf(cacheBuf, sizeof(cacheBuf),
@@ -209,15 +216,19 @@ void update_weather()
             JsonArray codeArr = doc["daily"]["weather_code"];
             lv_obj_add_flag(weather_screen_label, LV_OBJ_FLAG_HIDDEN);
             align_cfg_t weather_align = {0, 25, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_AUTO};
+            align_cfg_t weather_icon_align = {25, 0, LV_ALIGN_RIGHT_MID, LV_TEXT_ALIGN_AUTO};
+
             for (int i = 0; i < 9; i++) {
                 String timeStr = String(timeArr[i]);
                 float tempMin = tempMinArr[i].as<float>();
                 float tempMax = tempMaxArr[i].as<float>();
-                String code = get_weather_icon(codeArr[i].as<int>());
+                char *code = get_weather_icon(codeArr[i].as<int>());
                 weather_align.y += 20;
                 char textBuf[64];
-                snprintf(textBuf, sizeof(textBuf), "%s %.0fc/%.0fc %s", timeStr.c_str(), tempMax, tempMin, code);
-                lv_obj_t *weather_date = ui_add_aligned_label(NULL, textBuf, NULL, &style_default_small, &weather_align, NULL, screens[WEATHER_SCREEN]);
+                
+                snprintf(textBuf, sizeof(textBuf), "%s %.0fc/%.0fc", timeStr.c_str(), tempMax, tempMin);
+                lv_obj_t *weather_date = ui_add_aligned_label(NULL, textBuf, NULL, &style_default_medium, &weather_align, NULL, screens[WEATHER_SCREEN]);
+                lv_obj_t *weather_symbol = ui_add_aligned_label(NULL, code, weather_date, &style_weather, &weather_icon_align, NULL, screens[WEATHER_SCREEN]);
             }
         }
     }
