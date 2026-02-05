@@ -13,7 +13,7 @@
 
 
 lv_obj_t *time_label, *time_label_2;
-lv_obj_t *date_label, *outside_weather, *sun_status;
+lv_obj_t *date_label, *outside_weather, *current_weather, *sun_status;
 lv_obj_t *wifi_label, *battery_label, *charge_label, *bluetooth_label, *gps_label, *alarm_symbol_label;
 lv_obj_t *wifi_status_label, *power_status_label;
 lv_obj_t *alarm_time_label, *alarm_hours_roller, *alarm_minutes_roller;
@@ -203,9 +203,13 @@ void update_weather()
             Serial.println("Temp: " + String(temp) + "°C");
             char cacheBuf[128];
             snprintf(cacheBuf, sizeof(cacheBuf),
-                (const char*)"Temp: %.1f°C\nWind: %.1fkm/h %s\nWeather:", temp, wind, windDir.c_str() );
+                (const char*)"Temp: %.1f°C\nWind: %.1fkm/h %s", temp, wind, windDir.c_str() );
             putStringKV("weather", cacheBuf);
-            lv_label_set_text(outside_weather, cacheBuf);    
+            lv_label_set_text(outside_weather, cacheBuf); 
+            align_cfg_t current_weather_align = {15, 0, LV_ALIGN_RIGHT_MID, LV_TEXT_ALIGN_AUTO};
+            size_cfg_t current_weather_size = {20, 20};
+            lv_obj_t *current_weather_symbol = ui_add_aligned_label(NULL, get_weather_icon(weatherCode), current_weather, 
+                &style_weather, &current_weather_align, &current_weather_size, screens[CLOCK_SCREEN]);   
             snprintf(cacheBuf, sizeof(cacheBuf),
                 "Rise: %s Set: %s", sunrise, sunset);
             putStringKV("suntimes", cacheBuf);
@@ -401,11 +405,13 @@ void draw_clock_screen()
 
     static align_cfg_t aligns = {0, 5, LV_ALIGN_OUT_BOTTOM_MID, LV_TEXT_ALIGN_CENTER};
     static size_cfg_t date_size = {20, 200};
-    static size_cfg_t weather_size = {60, 200};
+    static size_cfg_t outside_weather_size = {40, 200};
+    static size_cfg_t current_weather_size = {20, 100};
     static size_cfg_t sun_size = {20, 200};
     date_label = ui_add_aligned_label("date", "Date: --", time_btn, &style_default, &aligns, &date_size, screen);
-    outside_weather = ui_add_aligned_label("weather", "Fetching weather..", date_label, &style_default_medium, &aligns, &weather_size, screen);
-    sun_status = ui_add_aligned_label("suntimes", "Rise: --:-- Set: --:--", outside_weather, &style_default_small, &aligns, &sun_size, screen);   
+    outside_weather = ui_add_aligned_label("weather", "Fetching weather..", date_label, &style_default_medium, &aligns, &outside_weather_size, screen);
+    current_weather = ui_add_aligned_label(NULL, "Weather:", outside_weather, &style_default_medium, &aligns, &current_weather_size, screen);
+    sun_status = ui_add_aligned_label("suntimes", "Rise: --:-- Set: --:--", current_weather, &style_default_small, &aligns, &sun_size, screen);   
 }
 
 void switch_to_screen(int screen)
