@@ -5,7 +5,7 @@ extern lv_obj_t *wifi_label, *battery_label, *charge_label, *bluetooth_label, *g
 extern lv_obj_t *wifi_status_label, *power_status_label;
 extern lv_obj_t *alarm_time_label, *alarm_hours_roller, *alarm_minutes_roller;
 extern lv_obj_t *popup;
-extern lv_obj_t *weather_screen_label;
+extern lv_obj_t *weather_screen_label, *weather_screen_status_label;
 
 extern int current_screen;
 

@@ -18,7 +18,7 @@ lv_obj_t *wifi_label, *battery_label, *charge_label, *bluetooth_label, *gps_labe
 lv_obj_t *wifi_status_label, *power_status_label;
 lv_obj_t *alarm_time_label, *alarm_hours_roller, *alarm_minutes_roller;
 lv_obj_t *popup;
-lv_obj_t *weather_screen_label;
+lv_obj_t *weather_screen_label, *weather_screen_status_label;
 
 int current_screen = CLOCK_SCREEN;
 alarm_cfg_t ui_alarm = {0, 0, false, false, 0};
@@ -218,22 +218,28 @@ void update_weather()
             JsonArray tempMinArr = doc["daily"]["temperature_2m_min"];
             JsonArray tempMaxArr = doc["daily"]["temperature_2m_max"];
             JsonArray codeArr = doc["daily"]["weather_code"];
-            lv_obj_add_flag(weather_screen_label, LV_OBJ_FLAG_HIDDEN);
+           // lv_obj_add_flag(weather_screen_label, LV_OBJ_FLAG_HIDDEN);
             align_cfg_t weather_align = {0, 25, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_AUTO};
             align_cfg_t weather_icon_align = {25, 0, LV_ALIGN_RIGHT_MID, LV_TEXT_ALIGN_AUTO};
-
-            for (int i = 0; i < 9; i++) {
+            char weatherBuf[512];
+            char weatherStatusBuf[64];
+            for (int i = 0; i < 7; i++) {
                 String timeStr = String(timeArr[i]);
                 float tempMin = tempMinArr[i].as<float>();
                 float tempMax = tempMaxArr[i].as<float>();
                 char *code = get_weather_icon(codeArr[i].as<int>());
                 weather_align.y += 20;
                 char textBuf[64];
-                
-                snprintf(textBuf, sizeof(textBuf), "%s %.0fc/%.0fc", timeStr.c_str(), tempMax, tempMin);
-                lv_obj_t *weather_date = ui_add_aligned_label(NULL, textBuf, NULL, &style_default_medium, &weather_align, NULL, screens[WEATHER_SCREEN]);
-                lv_obj_t *weather_symbol = ui_add_aligned_label(NULL, code, weather_date, &style_weather, &weather_icon_align, NULL, screens[WEATHER_SCREEN]);
+                char statusBuf[4];
+                snprintf(textBuf, sizeof(textBuf), "%s %.0fc/%.0fc\n", timeStr.c_str(), tempMax, tempMin);
+                strcat(weatherBuf, textBuf);
+                snprintf(statusBuf, sizeof(statusBuf), "%s\n", String(code).c_str());
+                strcat(weatherStatusBuf, statusBuf);
+                //lv_obj_t *weather_date = ui_add_aligned_label(NULL, textBuf, NULL, &style_default_medium, &weather_align, NULL, screens[WEATHER_SCREEN]);
+                //lv_obj_t *weather_symbol = ui_add_aligned_label(NULL, code, weather_date, &style_weather, &weather_icon_align, NULL, screens[WEATHER_SCREEN]);
             }
+            lv_label_set_text(weather_screen_label, String(weatherBuf).c_str());
+            lv_label_set_text(weather_screen_status_label, String(weatherStatusBuf).c_str());
         }
     }
     http.end();
@@ -389,9 +395,14 @@ void draw_alarm_screen()
 void draw_weather_screen()
 {
     lv_obj_t *screen = screens[WEATHER_SCREEN];
-    align_cfg_t aligns = {0, 45, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_AUTO};
-    size_cfg_t sizes = {30, 180};
-    weather_screen_label = ui_add_aligned_label(NULL, "No weather data", NULL, &style_default_small, &aligns, &sizes, screen);
+    align_cfg_t weather_screen_align = {0, 45, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_AUTO};
+    size_cfg_t weather_screen_size = {160, 180};
+    weather_screen_label = ui_add_aligned_label(NULL, "No weather data", NULL, &style_default_small, &weather_screen_align, 
+        &weather_screen_size, screen);
+    align_cfg_t weather_screen_status_align = {20, 0, LV_ALIGN_TOP_RIGHT, LV_TEXT_ALIGN_AUTO};
+    size_cfg_t weather_screen_status_size = {160, 40};
+    weather_screen_status_label = ui_add_aligned_label(NULL, "", weather_screen_label, &style_weather, &weather_screen_status_align, 
+        &weather_screen_status_size, screen);
 }
 
 void draw_clock_screen()

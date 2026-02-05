@@ -104,11 +104,11 @@ void loop()
         last_wifi_check = current_millis;
         check_wifi();
     }
-    if (current_millis - last_weather_check >= THIRTY_MINUTES || (!last_weather_check && WiFi.status() == WL_CONNECTED)) {
+    if (WiFi.status() == WL_CONNECTED && (current_millis - last_weather_check >= THIRTY_MINUTES || !last_weather_check)) {
         last_weather_check = current_millis;
-        if (current_screen == CLOCK_SCREEN) {
+       // if (current_screen == CLOCK_SCREEN) {
             update_weather();
-        }        
+        //}        
     }
     delay(20);
 }
