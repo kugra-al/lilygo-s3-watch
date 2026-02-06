@@ -239,18 +239,18 @@ void refresh_screen_headers()
     float volts = monitor.battery_voltage / 1000.0f;
     snprintf(battery_cacheBuf, sizeof(battery_cacheBuf),
          "Batt: %d%% %d.%02dv",
-         (int)monitor.battery_percent, 
+         monitor.battery_percent, 
          (int)volts,
          (int)(volts * 100) % 100);
     lv_label_set_text(power_status_label, battery_cacheBuf);
     char battery_percent_cacheBuf[8];
-    snprintf(battery_percent_cacheBuf, sizeof(battery_percent_cacheBuf), "%d%%", (int)monitor.battery_percent);
+    snprintf(battery_percent_cacheBuf, sizeof(battery_percent_cacheBuf), "%d%%", monitor.battery_percent);
     lv_label_set_text(battery_label, battery_percent_cacheBuf);
     if (monitor.wifi_connected)
         lv_style_set_text_color(&style_wifi, color_green);
     else
         lv_style_set_text_color(&style_wifi, color_red);
-    if (instance.pmu.isCharging()) {
+    if (monitor.charging) {
         lv_obj_clear_flag(charge_label, LV_OBJ_FLAG_HIDDEN);
         lv_obj_align_to(wifi_label, charge_label, LV_ALIGN_TOP_RIGHT, -15, 0);
     } else {

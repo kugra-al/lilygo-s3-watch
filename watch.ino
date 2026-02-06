@@ -24,9 +24,8 @@
 
 const char* ntpServer = "pool.ntp.org";  // European pool
 
-
-static bool wifi_connected = false;
-static unsigned long last_millis = 0, wifi_start_time = 0, last_weather_check = 0, last_wifi_check = 0, last_status_check = 0, last_time_sync = 0;
+static unsigned long last_millis = 0, wifi_start_time = 0, last_weather_check = 0, 
+    last_wifi_check = 0, last_status_check = 0, last_time_sync = 0;
 
 
 typedef struct {
@@ -36,12 +35,11 @@ typedef struct {
 static void check_wifi()
 {
     Serial.println("Wifi check");
-    if (WiFi.status() != WL_CONNECTED) {
+    if (!monitor.wifi_connected) {
         lv_style_set_text_color(&style_wifi, color_red);
         Serial.println("Attempting wifi connect");
         WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     } else {
-        wifi_connected = true;
         lv_style_set_text_color(&style_wifi, color_green);
         Serial.print("WiFi connected! IP: ");
         Serial.println(WiFi.localIP());
@@ -56,7 +54,7 @@ static void check_wifi()
             } 
         }
         char wifi_cacheBuf[70] = "Wifi not found";
-        if (WiFi.status() == WL_CONNECTED) {
+        if (monitor.wifi_connected) {
             snprintf(wifi_cacheBuf, sizeof(wifi_cacheBuf),
                 (const char*)"SSID: %s\nLocal IP: %s\nRouter IP: %s",
                     WiFi.SSID().c_str(), 
@@ -75,9 +73,9 @@ void setup()
     Serial.begin(115200);
     instance.begin();
     beginLvglHelper(instance);
+    hw_update_monitor();
     init_styles();
     init_screens();
-    hw_update_monitor();
     switch_to_screen(CLOCK_SCREEN);
     check_wifi();
     instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
@@ -106,11 +104,11 @@ void loop()
         last_wifi_check = current_millis;
         check_wifi();
     }
-    if (WiFi.status() == WL_CONNECTED && (current_millis - last_weather_check >= THIRTY_MINUTES || !last_weather_check)) {
+    if (monitor.wifi_connected && (current_millis - last_weather_check >= THIRTY_MINUTES || !last_weather_check)) {
         last_weather_check = current_millis;
        // if (current_screen == CLOCK_SCREEN) {
             update_weather();
         //}        
     }
-    delay(20);
+    delay(250);
 }
