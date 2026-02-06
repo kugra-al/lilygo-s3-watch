@@ -1,3 +1,4 @@
+#include "HardwareSerial.h"
 #include "ArduinoJson/Array/JsonArray.hpp"
 #include "misc/lv_area.h"
 #include <lvgl.h>
@@ -10,6 +11,7 @@
 #include "ui_screens.h"
 #include "config.h"
 #include "watch.h"
+#include "hw_monitor.h"
 
 
 lv_obj_t *time_label, *time_label_2;
@@ -129,21 +131,6 @@ void update_time()
     }
 }
 
-void update_battery_percent()
-{
-    lv_label_set_text_fmt(battery_label, "%d%%", get_battery_percent_remaining());
-    if (instance.pmu.isCharging()) {
-        lv_label_set_text(charge_label, LV_SYMBOL_CHARGE);
-    } else {
-        lv_label_set_text(charge_label, "");
-    }
-    char battery_cacheBuf[20] = "Battery status";
-    snprintf(battery_cacheBuf, sizeof(battery_cacheBuf),
-        (const char*)"Batt: %d%% %.2fv",
-        get_battery_percent_remaining(), (instance.pmu.getBattVoltage() / 1000.0f));
-    lv_label_set_text(power_status_label, battery_cacheBuf);
-}
-
 String wind_dir_to_text(float deg) {
   // normalize
   if (deg < 0) deg += 360;
@@ -247,7 +234,19 @@ void update_weather()
 
 void refresh_screen_headers()
 {
-    if (WiFi.status() == WL_CONNECTED)
+    Serial.println("Refreshing screen headers");
+    char battery_cacheBuf[20] = "Battery status";
+    float volts = monitor.battery_voltage / 1000.0f;
+    snprintf(battery_cacheBuf, sizeof(battery_cacheBuf),
+         "Batt: %d%% %d.%02dv",
+         (int)monitor.battery_percent, 
+         (int)volts,
+         (int)(volts * 100) % 100);
+    lv_label_set_text(power_status_label, battery_cacheBuf);
+    char battery_percent_cacheBuf[8];
+    snprintf(battery_percent_cacheBuf, sizeof(battery_percent_cacheBuf), "%d%%", (int)monitor.battery_percent);
+    lv_label_set_text(battery_label, battery_percent_cacheBuf);
+    if (monitor.wifi_connected)
         lv_style_set_text_color(&style_wifi, color_green);
     else
         lv_style_set_text_color(&style_wifi, color_red);
@@ -270,6 +269,7 @@ void refresh_screen_headers()
 
 void draw_screen_headers()
 {
+    Serial.println("Drawing screen headers");
     lv_obj_t *header = lv_obj_create(lv_layer_top());
     lv_obj_set_size(header, LV_HOR_RES, 40);
     lv_obj_set_style_bg_color(header, lv_color_black(), LV_PART_MAIN);
@@ -279,7 +279,7 @@ void draw_screen_headers()
 
     static align_cfg_t aligns = {0, 0, LV_ALIGN_TOP_RIGHT, LV_TEXT_ALIGN_AUTO};
 
-    battery_label = ui_add_aligned_label(NULL, "100%", NULL, &style_default_small, &aligns, NULL, header);
+    battery_label = ui_add_aligned_label(NULL, "??%", NULL, &style_default_small, &aligns, NULL, header);
 
     aligns.x = -40;
     charge_label = ui_add_aligned_label(NULL, LV_SYMBOL_CHARGE, battery_label, &style_charge, &aligns, NULL, header);
@@ -345,6 +345,7 @@ void alarm_time_change_event_handler(lv_event_t *e)
 
 void draw_alarm_screen()
 {
+    Serial.println("Drawing alarm screen");
     lv_obj_t *screen = screens[ALARM_SCREEN];
     lv_obj_t *alarm_title_label = ui_add_title_label("Alarm", screen);
     alarm_hours_roller = lv_roller_create(screen);
@@ -394,6 +395,7 @@ void draw_alarm_screen()
 
 void draw_weather_screen()
 {
+    Serial.println("Drawing alarm screen");
     lv_obj_t *screen = screens[WEATHER_SCREEN];
     align_cfg_t weather_screen_align = {0, 45, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_AUTO};
     size_cfg_t weather_screen_size = {160, 180};
@@ -407,6 +409,7 @@ void draw_weather_screen()
 
 void draw_clock_screen()
 {
+    Serial.println("Drawing clock screen");
     lv_obj_t *screen = screens[CLOCK_SCREEN];
     // Add clock btn
     align_cfg_t btn_align = {0, 45, LV_ALIGN_TOP_MID, LV_TEXT_ALIGN_AUTO};
@@ -427,6 +430,7 @@ void draw_clock_screen()
 
 void switch_to_screen(int screen)
 {
+    Serial.println("Switching screen");
     lv_scr_load(screens[screen]);
     if (current_screen != screen)   
         current_screen = screen;
@@ -445,6 +449,7 @@ void screen_swipe_cb(lv_event_t * e)
 
 void init_screens()
 {
+    Serial.println("Init screens");
     screens[CLOCK_SCREEN] = lv_obj_create(NULL);
     screens[STATUS_SCREEN] = lv_obj_create(NULL);
     screens[WEATHER_SCREEN] = lv_obj_create(NULL);
@@ -454,19 +459,11 @@ void init_screens()
         lv_obj_set_style_bg_opa(screens[i], LV_OPA_COVER, LV_PART_MAIN);
         lv_obj_add_event_cb(screens[i], screen_swipe_cb, LV_EVENT_GESTURE, NULL);
     }
-    draw_screen_headers();
     draw_clock_screen();
     draw_status_screen();
     draw_alarm_screen();
     draw_weather_screen();
-}
-
-
-int get_battery_percent_remaining()
-{
-    float volt = instance.pmu.getBattVoltage() / 1000.0f;
-    int percent = constrain((int)((volt - 3.0f) / (4.2f - 3.0f) * 100.0f), 0, 100);
-    return percent;
+    draw_screen_headers();
 }
 
 void draw_status_screen()

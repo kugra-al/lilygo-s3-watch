@@ -20,6 +20,7 @@
 #include "cache.h"
 #include "ui_screens.h"
 #include "watch.h"
+#include "hw_monitor.h"
 
 const char* ntpServer = "pool.ntp.org";  // European pool
 
@@ -76,6 +77,7 @@ void setup()
     beginLvglHelper(instance);
     init_styles();
     init_screens();
+    hw_update_monitor();
     switch_to_screen(CLOCK_SCREEN);
     check_wifi();
     instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
@@ -97,7 +99,7 @@ void loop()
     }
     if (current_millis - last_status_check >= FIVE_SECONDS) {
         last_status_check = current_millis;
-        update_battery_percent();
+        hw_update_monitor();
         refresh_screen_headers();
     }
     if (current_millis - last_wifi_check >= ONE_MINUTE) {
