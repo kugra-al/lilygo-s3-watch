@@ -6,6 +6,9 @@ typedef struct {
     float sys_voltage;
     bool charging;
     float temperature;
+    String ssid;
+    String local_ip;
+    String gateway_ip;
 } hw_monitor_t;
 
 extern hw_monitor_t monitor;

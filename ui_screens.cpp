@@ -17,7 +17,8 @@
 lv_obj_t *time_label, *time_label_2;
 lv_obj_t *date_label, *outside_weather, *current_weather, *sun_status;
 lv_obj_t *wifi_label, *battery_label, *charge_label, *bluetooth_label, *gps_label, *alarm_symbol_label;
-lv_obj_t *wifi_status_label, *power_status_label;
+lv_obj_t *ssid_status_label, *local_ip_status_label, *gateway_ip_status_label, *power_status_label, 
+    *temp_status_label;
 lv_obj_t *alarm_time_label, *alarm_hours_roller, *alarm_minutes_roller;
 lv_obj_t *popup;
 lv_obj_t *weather_screen_label, *weather_screen_status_label;
@@ -232,9 +233,11 @@ void update_weather()
     http.end();
 }
 
-void refresh_screen_headers()
+void ui_refresh_sensor_labels()
 {
-    Serial.println("Refreshing screen headers");
+    lv_label_set_text_fmt(ssid_status_label, "SSID: %s", monitor.ssid);
+    lv_label_set_text_fmt(local_ip_status_label, "Local IP: %s", monitor.local_ip);
+    lv_label_set_text_fmt(gateway_ip_status_label, "Gateway IP: %s", monitor.gateway_ip);
     char battery_cacheBuf[20] = "Battery status";
     float volts = monitor.battery_voltage / 1000.0f;
     snprintf(battery_cacheBuf, sizeof(battery_cacheBuf),
@@ -243,6 +246,16 @@ void refresh_screen_headers()
          (int)volts,
          (int)(volts * 100) % 100);
     lv_label_set_text(power_status_label, battery_cacheBuf);
+    char temp_cacheBuf[20];
+    snprintf(temp_cacheBuf, sizeof(temp_cacheBuf),
+        "Int. Temp.: %dc",
+        (int)monitor.temperature);
+    lv_label_set_text(temp_status_label, temp_cacheBuf);
+}
+
+void refresh_screen_headers()
+{
+    Serial.println("Refreshing screen headers");
     char battery_percent_cacheBuf[8];
     snprintf(battery_percent_cacheBuf, sizeof(battery_percent_cacheBuf), "%d%%", monitor.battery_percent);
     lv_label_set_text(battery_label, battery_percent_cacheBuf);
@@ -471,15 +484,11 @@ void draw_status_screen()
     lv_obj_t *screen = screens[STATUS_SCREEN];
     lv_obj_t *status_title_label = ui_add_title_label("Status", screen);
     
-    static align_cfg_t aligns = {-20, 5, LV_ALIGN_OUT_BOTTOM_LEFT, LV_TEXT_ALIGN_LEFT};
-    static size_cfg_t wifi_size = {60, 200};
-    static size_cfg_t battery_size = {20, 200};
-    char wifi_cacheBuf[70] = "SSID: N/A\nLocal IP: N/A\nRouter IP: N/A\n";
-    wifi_status_label = ui_add_aligned_label(NULL, wifi_cacheBuf, status_title_label, &style_default_small, &aligns, &wifi_size, screen);
-
-    char battery_cacheBuf[20] = "Battery status";
-    aligns.x = 0;
-    aligns.y = 0;
-    power_status_label = ui_add_aligned_label(NULL, battery_cacheBuf, wifi_status_label, &style_default, &aligns, &battery_size, screen);
+    static align_cfg_t aligns = {0, 0, LV_ALIGN_OUT_BOTTOM_LEFT, LV_TEXT_ALIGN_LEFT};
+    ssid_status_label = ui_add_aligned_label(NULL, "SSID: N/A", status_title_label, &style_default_medium, &aligns, NULL, screen);
+    local_ip_status_label = ui_add_aligned_label(NULL, "Local IP: N/A", ssid_status_label, &style_default_medium, &aligns, NULL, screen);
+    gateway_ip_status_label = ui_add_aligned_label(NULL, "Router IP: N/A", local_ip_status_label, &style_default_medium, &aligns, NULL, screen);
+    power_status_label = ui_add_aligned_label(NULL, "Batt:", gateway_ip_status_label, &style_default_medium, &aligns, NULL, screen);
+    temp_status_label = ui_add_aligned_label(NULL, "Int. Temp:", power_status_label, &style_default_medium, &aligns, NULL, screen);
     screens[1] = screen;
 }

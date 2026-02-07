@@ -13,6 +13,9 @@ void hw_update_monitor()
     monitor.sys_voltage = instance.pmu.getSystemVoltage();
     monitor.charging = instance.pmu.isCharging();
     monitor.temperature = instance.pmu.getTemperature();
+    monitor.ssid = WiFi.SSID().c_str();
+    monitor.local_ip = WiFi.localIP().toString().c_str();
+    monitor.gateway_ip = WiFi.gatewayIP().toString().c_str();
 }
 
 

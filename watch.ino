@@ -53,16 +53,6 @@ static void check_wifi()
                 Serial.printf("Time: %02d:%02d:%02d\n", timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
             } 
         }
-        char wifi_cacheBuf[70] = "Wifi not found";
-        if (monitor.wifi_connected) {
-            snprintf(wifi_cacheBuf, sizeof(wifi_cacheBuf),
-                (const char*)"SSID: %s\nLocal IP: %s\nRouter IP: %s",
-                    WiFi.SSID().c_str(), 
-                    WiFi.localIP().toString().c_str(), 
-                    WiFi.gatewayIP().toString().c_str()
-            );
-        }
-        lv_label_set_text(wifi_status_label, wifi_cacheBuf);
     }
     lv_obj_add_style(wifi_label, &style_wifi, LV_PART_MAIN);
 }
@@ -99,6 +89,7 @@ void loop()
         last_status_check = current_millis;
         hw_update_monitor();
         refresh_screen_headers();
+        ui_refresh_sensor_labels();
     }
     if (current_millis - last_wifi_check >= ONE_MINUTE) {
         last_wifi_check = current_millis;
