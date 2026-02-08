@@ -1,8 +1,8 @@
 extern lv_obj_t *time_label, *time_label_2;
-extern lv_obj_t *date_label, *outside_weather, *sun_status;
+extern lv_obj_t *date_label, *clock_temp_label, *clock_wind_label, *current_weather, *sun_status;
 extern lv_obj_t *status_label;
 extern lv_obj_t *wifi_label, *battery_label, *charge_label, *bluetooth_label, *gps_label, *alarm_symbol_label;
-extern lv_obj_t *wifi_status_label, *ssid_status_label, *local_ip_status_label, *gateway_ip_status_label, 
+extern lv_obj_t *ssid_status_label, *local_ip_status_label, *gateway_ip_status_label, 
     *power_status_label, *temp_status_label;
 extern lv_obj_t *alarm_time_label, *alarm_hours_roller, *alarm_minutes_roller;
 extern lv_obj_t *popup;

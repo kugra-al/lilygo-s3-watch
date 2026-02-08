@@ -15,7 +15,7 @@
 
 
 lv_obj_t *time_label, *time_label_2;
-lv_obj_t *date_label, *outside_weather, *current_weather, *sun_status;
+lv_obj_t *date_label, *clock_temp_label, *clock_wind_label, *current_weather, *sun_status;
 lv_obj_t *wifi_label, *battery_label, *charge_label, *bluetooth_label, *gps_label, *alarm_symbol_label;
 lv_obj_t *ssid_status_label, *local_ip_status_label, *gateway_ip_status_label, *power_status_label, 
     *temp_status_label;
@@ -189,12 +189,12 @@ void update_weather()
             sunrise = sunrise.substring(tPos+1, tPos+6);
             sunset = sunset.substring(tPos+1, tPos+6);
             Serial.println("Temp: " + String(temp) + "°C");
-            char cacheBuf[128];
-            snprintf(cacheBuf, sizeof(cacheBuf),
-                (const char*)"Temp: %.1f°C\nWind: %.1fkm/h %s", temp, wind, windDir.c_str() );
-            putStringKV("weather", cacheBuf);
-            lv_label_set_text(outside_weather, cacheBuf); 
-            align_cfg_t current_weather_align = {15, 0, LV_ALIGN_RIGHT_MID, LV_TEXT_ALIGN_AUTO};
+            
+            lv_label_set_text_fmt(clock_temp_label, "Temp: %.1f°C", temp);
+            lv_label_set_text_fmt(clock_wind_label, "Wind: %.1fkm/h %s", wind, windDir.c_str());
+            char cacheBuf[24];
+            //putStringKV("clock_temp", cacheBuf);
+            align_cfg_t current_weather_align = {25, 0, LV_ALIGN_RIGHT_MID, LV_TEXT_ALIGN_AUTO};
             size_cfg_t current_weather_size = {20, 20};
             lv_obj_t *current_weather_symbol = ui_add_aligned_label(NULL, get_weather_icon(weatherCode), current_weather, 
                 &style_weather, &current_weather_align, &current_weather_size, screens[CLOCK_SCREEN]);   
@@ -263,12 +263,16 @@ void refresh_screen_headers()
         lv_style_set_text_color(&style_wifi, color_green);
     else
         lv_style_set_text_color(&style_wifi, color_red);
+    int charge_adjust = 0;
+    if (monitor.battery_percent >= 100)
+        charge_adjust = -5;
+    lv_obj_align_to(charge_label, battery_label, LV_ALIGN_TOP_RIGHT, -40+charge_adjust, 0);
     if (monitor.charging) {
         lv_obj_clear_flag(charge_label, LV_OBJ_FLAG_HIDDEN);
         lv_obj_align_to(wifi_label, charge_label, LV_ALIGN_TOP_RIGHT, -15, 0);
     } else {
         lv_obj_add_flag(charge_label, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_align_to(wifi_label, battery_label, LV_ALIGN_TOP_RIGHT, -40, 0);
+        lv_obj_align_to(wifi_label, battery_label, LV_ALIGN_TOP_RIGHT, -40+charge_adjust, 0);
     }
     // These need to be realigned if wifi label changes position
     lv_obj_align_to(bluetooth_label, wifi_label, LV_ALIGN_TOP_RIGHT, -25, 0);
@@ -395,7 +399,7 @@ void draw_alarm_screen()
         &style_default_medium, &aligns, &alarm_label_size, screen);
     lv_label_set_text_fmt(alarm_time_label, "Alarm time: %02d:%02d", get_int_key_value("ui_alarm_hour", 0), get_int_key_value("ui_alarm_min", 0));
 
-    align_cfg_t btn_align = {20, 10, LV_ALIGN_OUT_BOTTOM_LEFT, LV_TEXT_ALIGN_AUTO};
+    align_cfg_t btn_align = {20, 10, LV_ALIGN_OUT_BOTTOM_MID, LV_TEXT_ALIGN_AUTO};
     size_cfg_t btn_size = {40, 80};
     lv_obj_t *alarm_btn = ui_add_button(NULL, "Set", alarm_time_label, &style_default, alarm_btn_event_cb, &btn_align, &btn_size, screen);
     align_cfg_t cancel_btn_align = {10, 0, LV_ALIGN_OUT_RIGHT_MID, LV_TEXT_ALIGN_AUTO};
@@ -430,14 +434,13 @@ void draw_clock_screen()
     lv_obj_t *time_btn = ui_add_button("time", "00:00:00", NULL, &style_default_large, clock_btn_event_cb, &btn_align, &btn_size, screen);
     time_label = lv_obj_get_child(time_btn, NULL);
 
-    static align_cfg_t aligns = {0, 5, LV_ALIGN_OUT_BOTTOM_MID, LV_TEXT_ALIGN_CENTER};
+    static align_cfg_t aligns = {0, 0, LV_ALIGN_OUT_BOTTOM_LEFT, LV_TEXT_ALIGN_CENTER};
     static size_cfg_t date_size = {20, 200};
-    static size_cfg_t outside_weather_size = {40, 200};
-    static size_cfg_t current_weather_size = {20, 100};
     static size_cfg_t sun_size = {20, 200};
     date_label = ui_add_aligned_label("date", "Date: --", time_btn, &style_default, &aligns, &date_size, screen);
-    outside_weather = ui_add_aligned_label("weather", "Fetching weather..", date_label, &style_default_medium, &aligns, &outside_weather_size, screen);
-    current_weather = ui_add_aligned_label(NULL, "Weather:", outside_weather, &style_default_medium, &aligns, &current_weather_size, screen);
+    clock_temp_label = ui_add_aligned_label("clock_temp", "", date_label, &style_default_medium, &aligns, NULL, screen);
+    clock_wind_label = ui_add_aligned_label("clock_wind", "", clock_temp_label, &style_default_medium, &aligns, NULL, screen);
+    current_weather = ui_add_aligned_label(NULL, "Weather:", clock_wind_label, &style_default_medium, &aligns, NULL, screen);
     sun_status = ui_add_aligned_label("suntimes", "Rise: --:-- Set: --:--", current_weather, &style_default_small, &aligns, &sun_size, screen);   
 }
 

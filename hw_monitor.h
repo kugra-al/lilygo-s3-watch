@@ -9,6 +9,7 @@ typedef struct {
     String ssid;
     String local_ip;
     String gateway_ip;
+    int orientation;
 } hw_monitor_t;
 
 extern hw_monitor_t monitor;
