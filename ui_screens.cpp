@@ -1,3 +1,4 @@
+#include "core/lv_obj_pos.h"
 #include "HardwareSerial.h"
 #include "ArduinoJson/Array/JsonArray.hpp"
 #include "misc/lv_area.h"
@@ -190,14 +191,11 @@ void update_weather()
             sunset = sunset.substring(tPos+1, tPos+6);
             Serial.println("Temp: " + String(temp) + "°C");
             
-            lv_label_set_text_fmt(clock_temp_label, "Temp: %.1f°C", temp);
-            lv_label_set_text_fmt(clock_wind_label, "Wind: %.1fkm/h %s", wind, windDir.c_str());
+            lv_label_set_text_fmt(clock_temp_label, "%.1f°C", temp);
+            lv_label_set_text_fmt(clock_wind_label, "%.1fkm/h %s", wind, windDir.c_str());
+            lv_label_set_text_fmt(current_weather, "%s", String(get_weather_icon(weatherCode)).c_str());   
+
             char cacheBuf[24];
-            //putStringKV("clock_temp", cacheBuf);
-            align_cfg_t current_weather_align = {25, 0, LV_ALIGN_RIGHT_MID, LV_TEXT_ALIGN_AUTO};
-            size_cfg_t current_weather_size = {20, 20};
-            lv_obj_t *current_weather_symbol = ui_add_aligned_label(NULL, get_weather_icon(weatherCode), current_weather, 
-                &style_weather, &current_weather_align, &current_weather_size, screens[CLOCK_SCREEN]);   
             snprintf(cacheBuf, sizeof(cacheBuf),
                 "Rise: %s Set: %s", sunrise, sunset);
             putStringKV("suntimes", cacheBuf);
@@ -434,14 +432,56 @@ void draw_clock_screen()
     lv_obj_t *time_btn = ui_add_button("time", "00:00:00", NULL, &style_default_large, clock_btn_event_cb, &btn_align, &btn_size, screen);
     time_label = lv_obj_get_child(time_btn, NULL);
 
-    static align_cfg_t aligns = {0, 0, LV_ALIGN_OUT_BOTTOM_LEFT, LV_TEXT_ALIGN_CENTER};
+    static align_cfg_t aligns = {0, 0, LV_ALIGN_OUT_BOTTOM_MID, LV_TEXT_ALIGN_CENTER};
     static size_cfg_t date_size = {20, 200};
     static size_cfg_t sun_size = {20, 200};
     date_label = ui_add_aligned_label("date", "Date: --", time_btn, &style_default, &aligns, &date_size, screen);
-    clock_temp_label = ui_add_aligned_label("clock_temp", "", date_label, &style_default_medium, &aligns, NULL, screen);
-    clock_wind_label = ui_add_aligned_label("clock_wind", "", clock_temp_label, &style_default_medium, &aligns, NULL, screen);
-    current_weather = ui_add_aligned_label(NULL, "Weather:", clock_wind_label, &style_default_medium, &aligns, NULL, screen);
-    sun_status = ui_add_aligned_label("suntimes", "Rise: --:-- Set: --:--", current_weather, &style_default_small, &aligns, &sun_size, screen);   
+
+    static int32_t col_dsc[] = {80, 100, LV_GRID_TEMPLATE_LAST};
+    static int32_t row_dsc[] = {20, 15, 15, LV_GRID_TEMPLATE_LAST};
+
+    static align_cfg_t grid_aligns = {0, 0, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_LEFT};
+    /*Create a container with grid*/
+    lv_obj_t *container = lv_obj_create(screen);
+    lv_obj_add_style(container, &style_grid, LV_PART_MAIN);
+    lv_style_set_pad_row(&style_grid, 3);
+    lv_style_set_pad_column(&style_grid, 0);
+    lv_style_set_pad_top(&style_grid, 0);
+    lv_style_set_pad_left(&style_grid, 0);
+    lv_style_set_pad_bottom(&style_grid, 0);
+    lv_style_set_pad_right(&style_grid, 0);
+    lv_obj_set_style_grid_column_dsc_array(container, col_dsc, 0);
+    lv_obj_set_style_grid_row_dsc_array(container, row_dsc, 0);
+    lv_obj_set_size(container, 180, 80);
+    lv_obj_align_to(container, date_label, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 0);
+    lv_obj_set_layout(container, LV_LAYOUT_GRID);
+    lv_obj_clear_flag(container, LV_OBJ_FLAG_SCROLLABLE);
+
+    lv_obj_t *clock_temp_title_label = lv_label_create(container);
+    lv_label_set_text(clock_temp_title_label, "Temp:");
+    lv_obj_set_grid_cell(clock_temp_title_label, LV_GRID_ALIGN_STRETCH, 0, 1,
+                             LV_GRID_ALIGN_STRETCH, 0, 1);
+    clock_temp_label = ui_add_aligned_label("clock_temp", "", NULL, &style_default_small, &grid_aligns, NULL, container);
+    lv_obj_set_grid_cell(clock_temp_label, LV_GRID_ALIGN_STRETCH, 1, 1,
+                             LV_GRID_ALIGN_STRETCH, 0, 1);
+
+    lv_obj_t *clock_wind_title_label = lv_label_create(container);
+    lv_label_set_text(clock_wind_title_label, "Wind:");
+    lv_obj_set_grid_cell(clock_wind_title_label, LV_GRID_ALIGN_STRETCH, 0, 1,
+                             LV_GRID_ALIGN_STRETCH, 1, 1);
+    clock_wind_label = ui_add_aligned_label("clock_wind", "", NULL, &style_default_small, &grid_aligns, NULL, container);
+    lv_obj_set_grid_cell(clock_wind_label, LV_GRID_ALIGN_STRETCH, 1, 1,
+                             LV_GRID_ALIGN_STRETCH, 1, 1);
+
+    lv_obj_t *clock_weather_title_label = lv_label_create(container);
+    lv_label_set_text(clock_weather_title_label, "Weather:");
+    lv_obj_set_grid_cell(clock_weather_title_label, LV_GRID_ALIGN_STRETCH, 0, 1,
+                             LV_GRID_ALIGN_STRETCH, 2, 1);
+    current_weather = ui_add_aligned_label(NULL, "", NULL, &style_weather, &grid_aligns, NULL, container);
+    lv_obj_set_grid_cell(current_weather, LV_GRID_ALIGN_STRETCH, 1, 1,
+                             LV_GRID_ALIGN_STRETCH, 2, 1);
+
+    sun_status = ui_add_aligned_label("suntimes", "Rise: --:-- Set: --:--", container, &style_default_small, &aligns, &sun_size, screen);   
 }
 
 void switch_to_screen(int screen)
@@ -470,6 +510,7 @@ void init_screens()
     screens[STATUS_SCREEN] = lv_obj_create(NULL);
     screens[WEATHER_SCREEN] = lv_obj_create(NULL);
     screens[ALARM_SCREEN] = lv_obj_create(NULL);
+    screens[GRID_SCREEN] = lv_obj_create(NULL);
     for (int i = 0; i < NUM_SCREENS; i++) {
         lv_obj_set_style_bg_color(screens[i], lv_color_black(), LV_PART_MAIN);
         lv_obj_set_style_bg_opa(screens[i], LV_OPA_COVER, LV_PART_MAIN);
@@ -479,6 +520,7 @@ void init_screens()
     draw_status_screen();
     draw_alarm_screen();
     draw_weather_screen();
+    draw_grid_screen();
     draw_screen_headers();
 }
 
@@ -494,4 +536,41 @@ void draw_status_screen()
     power_status_label = ui_add_aligned_label(NULL, "Batt:", gateway_ip_status_label, &style_default_medium, &aligns, NULL, screen);
     temp_status_label = ui_add_aligned_label(NULL, "Int. Temp:", power_status_label, &style_default_medium, &aligns, NULL, screen);
     screens[1] = screen;
+}
+
+void draw_grid_screen()
+{
+
+    lv_obj_t *screen = screens[GRID_SCREEN];
+    static int32_t col_dsc[] = {50, 50, 50, LV_GRID_TEMPLATE_LAST};
+    static int32_t row_dsc[] = {50, 50, 50, LV_GRID_TEMPLATE_LAST};
+
+    /*Create a container with grid*/
+    lv_obj_t * cont = lv_obj_create(screen);
+    lv_obj_set_style_grid_column_dsc_array(cont, col_dsc, 0);
+    lv_obj_set_style_grid_row_dsc_array(cont, row_dsc, 0);
+    lv_obj_set_size(cont, 200, 200);
+    lv_obj_center(cont);
+    lv_obj_set_layout(cont, LV_LAYOUT_GRID);
+
+    lv_obj_t * label;
+    lv_obj_t * obj;
+
+    uint8_t i;
+    for(i = 0; i < 9; i++) {
+        uint8_t col = i % 3;
+        uint8_t row = i / 3;
+
+       // obj = lv_button_create(cont);
+        /*Stretch the cell horizontally and vertically too
+         *Set span to 1 to make the cell 1 column/row sized*/
+      //  lv_obj_set_grid_cell(obj, LV_GRID_ALIGN_STRETCH, col, 1,
+      //                       LV_GRID_ALIGN_STRETCH, row, 1);
+
+        label = lv_label_create(cont);
+        lv_label_set_text_fmt(label, "c%d, r%d", col, row);
+        lv_obj_set_grid_cell(label, LV_GRID_ALIGN_STRETCH, col, 1,
+                             LV_GRID_ALIGN_STRETCH, row, 1);
+    }
+
 }

@@ -16,6 +16,7 @@ lv_style_t style_roller_selected;
 lv_style_t style_charge;
 lv_style_t style_wifi;
 lv_style_t style_weather;
+lv_style_t style_grid;
 
 void init_styles()
 {
@@ -41,7 +42,8 @@ void init_styles()
         { &style_roller_selected, &lv_font_montserrat_18, lv_color_black(), color_default, lv_color_black(), 1},
         { &style_charge, &lv_font_montserrat_16, color_yellow, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
         { &style_wifi, &lv_font_montserrat_16, color_red, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
-        { &style_weather, &weather_icons, color_default, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL }
+        { &style_weather, &weather_icons, color_default, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
+        { &style_grid, &lv_font_montserrat_16, color_default, lv_color_black(), lv_color_black(), 1}
     };
     
     for (int i = 0; i < sizeof(styles) / sizeof(styles[0]); i++) {
@@ -69,12 +71,14 @@ lv_obj_t *ui_add_aligned_label(char *cache_key, char *default_text, lv_obj_t *al
         lv_obj_set_width(label, sizes->width);
         lv_obj_set_height(label, sizes->height);
     }
-    if (aligns->text_align != NULL)  
-        lv_obj_set_style_text_align(label, aligns->text_align, 0);                                 /*Set center alignment*/
-    if (align_to_obj)
-        lv_obj_align_to(label, align_to_obj, aligns->align, aligns->x, aligns->y);
-    else
-        lv_obj_align(label, aligns->align, aligns->x, aligns->y);
+    if (aligns != NULL) {
+        if (aligns->text_align != NULL)  
+            lv_obj_set_style_text_align(label, aligns->text_align, 0);                                 /*Set center alignment*/
+        if (align_to_obj)
+            lv_obj_align_to(label, align_to_obj, aligns->align, aligns->x, aligns->y);
+        else
+            lv_obj_align(label, aligns->align, aligns->x, aligns->y);
+    }
     lv_obj_add_style(label, style, LV_PART_MAIN);
     return label;
 }

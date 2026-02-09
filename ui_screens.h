@@ -19,18 +19,20 @@ typedef struct {
 } alarm_cfg_t;
 
 extern alarm_cfg_t ui_alarm;
-static lv_obj_t *screens[4];
+static lv_obj_t *screens[5];
 #define NUM_SCREENS (sizeof(screens) / sizeof(screens[0]))
 
 #define CLOCK_SCREEN 0
 #define STATUS_SCREEN 1
 #define WEATHER_SCREEN 2
 #define ALARM_SCREEN 3
+#define GRID_SCREEN 4
 
 void draw_clock_screen();
 void draw_status_screen();
 void draw_alarm_screen();
 void draw_weather_screen();
+void draw_grid_screen();
 void draw_numpad();
 void ui_refresh_sensor_labels();
 void init_screens();

@@ -29,6 +29,7 @@ extern lv_style_t style_roller_selected;
 extern lv_style_t style_wifi;
 extern lv_style_t style_charge;
 extern lv_style_t style_weather;
+extern lv_style_t style_grid;
 
 void init_styles();
 lv_obj_t *ui_add_aligned_label(char *cache_key, char *default_text, lv_obj_t *align_to_obj, lv_style_t *style, align_cfg_t *aligns, size_cfg_t *sizes, lv_obj_t *screen);
