@@ -18,8 +18,8 @@
 lv_obj_t *time_label, *time_label_2;
 lv_obj_t *date_label, *clock_temp_label, *clock_wind_label, *current_weather, *sun_status;
 lv_obj_t *wifi_label, *battery_label, *charge_label, *bluetooth_label, *gps_label, *alarm_symbol_label;
-lv_obj_t *ssid_status_label, *local_ip_status_label, *gateway_ip_status_label, *power_status_label, 
-    *temp_status_label;
+lv_obj_t *status_ssid_value_label, *status_local_ip_value_label, *status_gateway_ip_value_label, 
+    *status_power_value_label, *status_temp_value_label;
 lv_obj_t *alarm_time_label, *alarm_hours_roller, *alarm_minutes_roller;
 lv_obj_t *popup;
 lv_obj_t *weather_screen_label, *weather_screen_status_label;
@@ -235,22 +235,22 @@ void update_weather()
 
 void ui_refresh_sensor_labels()
 {
-    lv_label_set_text_fmt(ssid_status_label, "SSID: %s", monitor.ssid);
-    lv_label_set_text_fmt(local_ip_status_label, "Local IP: %s", monitor.local_ip);
-    lv_label_set_text_fmt(gateway_ip_status_label, "Gateway IP: %s", monitor.gateway_ip);
-    char battery_cacheBuf[20] = "Battery status";
+    lv_label_set_text_fmt(status_ssid_value_label, "%s", monitor.ssid);
+    lv_label_set_text_fmt(status_local_ip_value_label, "%s", monitor.local_ip);
+    lv_label_set_text_fmt(status_gateway_ip_value_label, "%s", monitor.gateway_ip);
+    char battery_cacheBuf[20];
     float volts = monitor.battery_voltage / 1000.0f;
     snprintf(battery_cacheBuf, sizeof(battery_cacheBuf),
-         "Batt: %d%% %d.%02dv",
+         "%d%% %d.%02dv",
          monitor.battery_percent, 
          (int)volts,
          (int)(volts * 100) % 100);
-    lv_label_set_text(power_status_label, battery_cacheBuf);
+    lv_label_set_text(status_power_value_label, battery_cacheBuf);
     char temp_cacheBuf[20];
     snprintf(temp_cacheBuf, sizeof(temp_cacheBuf),
-        "Int. Temp.: %dc",
+        "%dc",
         (int)monitor.temperature);
-    lv_label_set_text(temp_status_label, temp_cacheBuf);
+    lv_label_set_text(status_temp_value_label, temp_cacheBuf);
 }
 
 void refresh_screen_headers()
@@ -523,12 +523,58 @@ void draw_status_screen()
 {
     lv_obj_t *screen = screens[STATUS_SCREEN];
     lv_obj_t *status_title_label = ui_add_title_label("Status", screen);
-    
-    static align_cfg_t aligns = {0, 0, LV_ALIGN_OUT_BOTTOM_LEFT, LV_TEXT_ALIGN_LEFT};
-    ssid_status_label = ui_add_aligned_label(NULL, "SSID: N/A", status_title_label, &style_default_small, &aligns, NULL, screen);
-    local_ip_status_label = ui_add_aligned_label(NULL, "Local IP: N/A", ssid_status_label, &style_default_small, &aligns, NULL, screen);
-    gateway_ip_status_label = ui_add_aligned_label(NULL, "Router IP: N/A", local_ip_status_label, &style_default_small, &aligns, NULL, screen);
-    power_status_label = ui_add_aligned_label(NULL, "Batt:", gateway_ip_status_label, &style_default_small, &aligns, NULL, screen);
-    temp_status_label = ui_add_aligned_label(NULL, "Int. Temp:", power_status_label, &style_default_small, &aligns, NULL, screen);
-    screens[1] = screen;
+
+    static int32_t col_dsc[] = {100, 140, LV_GRID_TEMPLATE_LAST};
+    static int32_t row_dsc[] = {20, 20, 20, 20, 20, 20, LV_GRID_TEMPLATE_LAST};
+
+    static align_cfg_t grid_aligns = {0, 0, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_LEFT};
+    /*Create a container with grid*/
+    lv_obj_t *container = lv_obj_create(screen);
+    lv_obj_add_style(container, &style_grid, LV_PART_MAIN);
+    lv_obj_set_style_grid_column_dsc_array(container, col_dsc, 0);
+    lv_obj_set_style_grid_row_dsc_array(container, row_dsc, 0);
+    lv_obj_set_size(container, 240, 120);
+    lv_obj_align(container, LV_ALIGN_TOP_LEFT, 0, 90);
+    lv_obj_set_layout(container, LV_LAYOUT_GRID);
+    lv_obj_clear_flag(container, LV_OBJ_FLAG_SCROLLABLE);
+
+    lv_obj_t *status_ssid_title_label = lv_label_create(container);
+    lv_label_set_text(status_ssid_title_label, "SSID:");
+    lv_obj_set_grid_cell(status_ssid_title_label, LV_GRID_ALIGN_STRETCH, 0, 1,
+                             LV_GRID_ALIGN_STRETCH, 0, 1);
+    status_ssid_value_label = lv_label_create(container);
+    lv_obj_set_grid_cell(status_ssid_value_label, LV_GRID_ALIGN_STRETCH, 1, 1,
+                             LV_GRID_ALIGN_STRETCH, 0, 1);
+
+    lv_obj_t *status_local_ip_title_label = lv_label_create(container);
+    lv_label_set_text(status_local_ip_title_label, "Local IP:");
+    lv_obj_set_grid_cell(status_local_ip_title_label, LV_GRID_ALIGN_STRETCH, 0, 1,
+                             LV_GRID_ALIGN_STRETCH, 1, 1);
+    status_local_ip_value_label = lv_label_create(container);
+    lv_obj_set_grid_cell(status_local_ip_value_label, LV_GRID_ALIGN_STRETCH, 1, 1,
+                             LV_GRID_ALIGN_STRETCH, 1, 1);
+
+    lv_obj_t *status_gateway_ip_title_label = lv_label_create(container);
+    lv_label_set_text(status_gateway_ip_title_label, "Gateway IP:");
+    lv_obj_set_grid_cell(status_gateway_ip_title_label, LV_GRID_ALIGN_STRETCH, 0, 1,
+                             LV_GRID_ALIGN_STRETCH, 2, 1);
+    status_gateway_ip_value_label = lv_label_create(container);
+    lv_obj_set_grid_cell(status_gateway_ip_value_label, LV_GRID_ALIGN_STRETCH, 1, 1,
+                             LV_GRID_ALIGN_STRETCH, 2, 1);
+
+    lv_obj_t *status_power_title_label = lv_label_create(container);
+    lv_label_set_text(status_power_title_label, "Battery:");
+    lv_obj_set_grid_cell(status_power_title_label, LV_GRID_ALIGN_STRETCH, 0, 1,
+                             LV_GRID_ALIGN_STRETCH, 3, 1);
+    status_power_value_label = lv_label_create(container);
+    lv_obj_set_grid_cell(status_power_value_label, LV_GRID_ALIGN_STRETCH, 1, 1,
+                             LV_GRID_ALIGN_STRETCH, 3, 1);
+
+    lv_obj_t *status_temp_title_label = lv_label_create(container);
+    lv_label_set_text(status_temp_title_label, "Int. Temp.:");
+    lv_obj_set_grid_cell(status_temp_title_label, LV_GRID_ALIGN_STRETCH, 0, 1,
+                             LV_GRID_ALIGN_STRETCH, 4, 1);
+    status_temp_value_label = lv_label_create(container);
+    lv_obj_set_grid_cell(status_temp_value_label, LV_GRID_ALIGN_STRETCH, 1, 1,
+                             LV_GRID_ALIGN_STRETCH, 4, 1);
 }
