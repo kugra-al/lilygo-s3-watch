@@ -168,6 +168,7 @@ char *get_weather_icon(int code)
 
 void update_weather()
 {
+    Serial.println("Attempting to fetch weather");
     String url = String("https://api.open-meteo.com/v1/forecast?latitude=")+LATITUDE+
         "&longitude="+LONGITUDE+"&current_weather=true&daily=sunrise,sunset,weather_code,temperature_2m_max,"+
         "temperature_2m_min&timezone=Europe/Vilnius&forecast_days=14";  
@@ -175,6 +176,7 @@ void update_weather()
     http.begin(url);
     int code = http.GET();
     if (code == 200) {
+        Serial.println("Fetched weather");
         String payload = http.getString();
         StaticJsonDocument<2048> doc;
         DeserializationError error = deserializeJson(doc, payload);
@@ -397,7 +399,7 @@ void draw_alarm_screen()
         &style_default_medium, &aligns, &alarm_label_size, screen);
     lv_label_set_text_fmt(alarm_time_label, "Alarm time: %02d:%02d", get_int_key_value("ui_alarm_hour", 0), get_int_key_value("ui_alarm_min", 0));
 
-    align_cfg_t btn_align = {20, 10, LV_ALIGN_OUT_BOTTOM_MID, LV_TEXT_ALIGN_AUTO};
+    align_cfg_t btn_align = {20, 10, LV_ALIGN_OUT_BOTTOM_LEFT, LV_TEXT_ALIGN_AUTO};
     size_cfg_t btn_size = {40, 80};
     lv_obj_t *alarm_btn = ui_add_button(NULL, "Set", alarm_time_label, &style_default, alarm_btn_event_cb, &btn_align, &btn_size, screen);
     align_cfg_t cancel_btn_align = {10, 0, LV_ALIGN_OUT_RIGHT_MID, LV_TEXT_ALIGN_AUTO};
@@ -438,22 +440,16 @@ void draw_clock_screen()
     date_label = ui_add_aligned_label("date", "Date: --", time_btn, &style_default, &aligns, &date_size, screen);
 
     static int32_t col_dsc[] = {80, 100, LV_GRID_TEMPLATE_LAST};
-    static int32_t row_dsc[] = {20, 15, 15, LV_GRID_TEMPLATE_LAST};
+    static int32_t row_dsc[] = {20, 20, 20, LV_GRID_TEMPLATE_LAST};
 
     static align_cfg_t grid_aligns = {0, 0, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_LEFT};
     /*Create a container with grid*/
     lv_obj_t *container = lv_obj_create(screen);
     lv_obj_add_style(container, &style_grid, LV_PART_MAIN);
-    lv_style_set_pad_row(&style_grid, 3);
-    lv_style_set_pad_column(&style_grid, 0);
-    lv_style_set_pad_top(&style_grid, 0);
-    lv_style_set_pad_left(&style_grid, 0);
-    lv_style_set_pad_bottom(&style_grid, 0);
-    lv_style_set_pad_right(&style_grid, 0);
     lv_obj_set_style_grid_column_dsc_array(container, col_dsc, 0);
     lv_obj_set_style_grid_row_dsc_array(container, row_dsc, 0);
-    lv_obj_set_size(container, 180, 80);
-    lv_obj_align_to(container, date_label, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 0);
+    lv_obj_set_size(container, 180, 70);
+    lv_obj_align_to(container, date_label, LV_ALIGN_OUT_BOTTOM_LEFT, 10, 0);
     lv_obj_set_layout(container, LV_LAYOUT_GRID);
     lv_obj_clear_flag(container, LV_OBJ_FLAG_SCROLLABLE);
 
@@ -481,6 +477,7 @@ void draw_clock_screen()
     lv_obj_set_grid_cell(current_weather, LV_GRID_ALIGN_STRETCH, 1, 1,
                              LV_GRID_ALIGN_STRETCH, 2, 1);
 
+    aligns.x = 5;
     sun_status = ui_add_aligned_label("suntimes", "Rise: --:-- Set: --:--", container, &style_default_small, &aligns, &sun_size, screen);   
 }
 
@@ -510,7 +507,6 @@ void init_screens()
     screens[STATUS_SCREEN] = lv_obj_create(NULL);
     screens[WEATHER_SCREEN] = lv_obj_create(NULL);
     screens[ALARM_SCREEN] = lv_obj_create(NULL);
-    screens[GRID_SCREEN] = lv_obj_create(NULL);
     for (int i = 0; i < NUM_SCREENS; i++) {
         lv_obj_set_style_bg_color(screens[i], lv_color_black(), LV_PART_MAIN);
         lv_obj_set_style_bg_opa(screens[i], LV_OPA_COVER, LV_PART_MAIN);
@@ -520,7 +516,6 @@ void init_screens()
     draw_status_screen();
     draw_alarm_screen();
     draw_weather_screen();
-    draw_grid_screen();
     draw_screen_headers();
 }
 
@@ -530,47 +525,10 @@ void draw_status_screen()
     lv_obj_t *status_title_label = ui_add_title_label("Status", screen);
     
     static align_cfg_t aligns = {0, 0, LV_ALIGN_OUT_BOTTOM_LEFT, LV_TEXT_ALIGN_LEFT};
-    ssid_status_label = ui_add_aligned_label(NULL, "SSID: N/A", status_title_label, &style_default_medium, &aligns, NULL, screen);
-    local_ip_status_label = ui_add_aligned_label(NULL, "Local IP: N/A", ssid_status_label, &style_default_medium, &aligns, NULL, screen);
-    gateway_ip_status_label = ui_add_aligned_label(NULL, "Router IP: N/A", local_ip_status_label, &style_default_medium, &aligns, NULL, screen);
-    power_status_label = ui_add_aligned_label(NULL, "Batt:", gateway_ip_status_label, &style_default_medium, &aligns, NULL, screen);
-    temp_status_label = ui_add_aligned_label(NULL, "Int. Temp:", power_status_label, &style_default_medium, &aligns, NULL, screen);
+    ssid_status_label = ui_add_aligned_label(NULL, "SSID: N/A", status_title_label, &style_default_small, &aligns, NULL, screen);
+    local_ip_status_label = ui_add_aligned_label(NULL, "Local IP: N/A", ssid_status_label, &style_default_small, &aligns, NULL, screen);
+    gateway_ip_status_label = ui_add_aligned_label(NULL, "Router IP: N/A", local_ip_status_label, &style_default_small, &aligns, NULL, screen);
+    power_status_label = ui_add_aligned_label(NULL, "Batt:", gateway_ip_status_label, &style_default_small, &aligns, NULL, screen);
+    temp_status_label = ui_add_aligned_label(NULL, "Int. Temp:", power_status_label, &style_default_small, &aligns, NULL, screen);
     screens[1] = screen;
-}
-
-void draw_grid_screen()
-{
-
-    lv_obj_t *screen = screens[GRID_SCREEN];
-    static int32_t col_dsc[] = {50, 50, 50, LV_GRID_TEMPLATE_LAST};
-    static int32_t row_dsc[] = {50, 50, 50, LV_GRID_TEMPLATE_LAST};
-
-    /*Create a container with grid*/
-    lv_obj_t * cont = lv_obj_create(screen);
-    lv_obj_set_style_grid_column_dsc_array(cont, col_dsc, 0);
-    lv_obj_set_style_grid_row_dsc_array(cont, row_dsc, 0);
-    lv_obj_set_size(cont, 200, 200);
-    lv_obj_center(cont);
-    lv_obj_set_layout(cont, LV_LAYOUT_GRID);
-
-    lv_obj_t * label;
-    lv_obj_t * obj;
-
-    uint8_t i;
-    for(i = 0; i < 9; i++) {
-        uint8_t col = i % 3;
-        uint8_t row = i / 3;
-
-       // obj = lv_button_create(cont);
-        /*Stretch the cell horizontally and vertically too
-         *Set span to 1 to make the cell 1 column/row sized*/
-      //  lv_obj_set_grid_cell(obj, LV_GRID_ALIGN_STRETCH, col, 1,
-      //                       LV_GRID_ALIGN_STRETCH, row, 1);
-
-        label = lv_label_create(cont);
-        lv_label_set_text_fmt(label, "c%d, r%d", col, row);
-        lv_obj_set_grid_cell(label, LV_GRID_ALIGN_STRETCH, col, 1,
-                             LV_GRID_ALIGN_STRETCH, row, 1);
-    }
-
 }

@@ -18,6 +18,24 @@ lv_style_t style_wifi;
 lv_style_t style_weather;
 lv_style_t style_grid;
 
+void init_style_grid()
+{
+    lv_style_init(&style_grid);
+    lv_style_set_text_font(&style_grid, &lv_font_montserrat_16);
+    lv_style_set_text_color(&style_grid, color_default);
+    lv_style_set_border_width(&style_grid, 0);
+    lv_style_set_bg_color(&style_grid,  lv_color_black());
+    lv_style_set_pad_row(&style_grid, 3);
+    lv_style_set_pad_column(&style_grid, 0);
+    lv_style_set_pad_top(&style_grid, 0);
+    lv_style_set_pad_left(&style_grid, 0);
+    lv_style_set_pad_bottom(&style_grid, 0);
+    lv_style_set_pad_right(&style_grid, 0);
+    lv_style_set_margin_top(&style_grid, 0);
+    lv_style_set_margin_left(&style_grid, 0);
+    lv_style_set_margin_bottom(&style_grid, 0);
+    lv_style_set_margin_right(&style_grid, 0);
+}
 void init_styles()
 {
     typedef struct {
@@ -42,8 +60,7 @@ void init_styles()
         { &style_roller_selected, &lv_font_montserrat_18, lv_color_black(), color_default, lv_color_black(), 1},
         { &style_charge, &lv_font_montserrat_16, color_yellow, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
         { &style_wifi, &lv_font_montserrat_16, color_red, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
-        { &style_weather, &weather_icons, color_default, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
-        { &style_grid, &lv_font_montserrat_16, color_default, lv_color_black(), lv_color_black(), 1}
+        { &style_weather, &weather_icons, color_default, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL }
     };
     
     for (int i = 0; i < sizeof(styles) / sizeof(styles[0]); i++) {
@@ -56,6 +73,7 @@ void init_styles()
             lv_style_set_border_width(styles[i].style, styles[i].border_width);
         }
     }
+    init_style_grid();
 }
 
 lv_obj_t *ui_add_aligned_label(char *cache_key, char *default_text, lv_obj_t *align_to_obj, 
@@ -116,8 +134,8 @@ lv_obj_t *ui_add_button(char *cache_key, char *default_text, lv_obj_t *align_to_
 
 lv_obj_t *ui_add_title_label(char *label_text, lv_obj_t *screen)
 {
-    align_cfg_t title_label_align = {0, 45, LV_ALIGN_TOP_MID, LV_TEXT_ALIGN_AUTO};
-    size_cfg_t title_label_size = {50, 180};
+    align_cfg_t title_label_align = {0, 40, LV_ALIGN_TOP_MID, LV_TEXT_ALIGN_AUTO};
+    size_cfg_t title_label_size = {40, 180};
     lv_obj_t *title_label = ui_add_aligned_label(NULL, label_text, NULL, &style_default_large, &title_label_align, 
         &title_label_size, screen);
     return title_label;
