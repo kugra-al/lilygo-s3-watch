@@ -29,6 +29,8 @@ alarm_cfg_t ui_alarm = {0, 0, false, false, 0};
 
 static void clock_btn_event_cb(lv_event_t *e)
 {
+    if (monitor.sleeping)
+        return;
     lv_event_code_t code = lv_event_get_code(e);
     lv_obj_t *btn = lv_event_get_target_obj(e);
     if (code == LV_EVENT_CLICKED) {
@@ -53,6 +55,8 @@ void alarm_start()
     ui_alarm.running = true;
     ui_alarm.end_time = millis()+ONE_MINUTE;
     init_popup("Alarm", "Stop", alarm_stop_btn_cb);
+    if (monitor.sleeping)
+        wakeup();
     last_event = millis();
 }
 
@@ -326,6 +330,8 @@ void draw_screen_headers()
 
 void alarm_btn_event_cb(lv_event_t *e)
 {
+    if (monitor.sleeping)
+        return;
     lv_event_code_t code = lv_event_get_code(e);
     lv_obj_t *btn = lv_event_get_target_obj(e);
     if (code == LV_EVENT_CLICKED) {
@@ -349,6 +355,8 @@ void alarm_btn_event_cb(lv_event_t *e)
 
 void alarm_cancel_btn_event_cb(lv_event_t *e) 
 {
+    if (monitor.sleeping)
+        return;
     lv_event_code_t code = lv_event_get_code(e);
     lv_obj_t *btn = lv_event_get_target_obj(e);
     if (code == LV_EVENT_CLICKED) {
@@ -494,6 +502,8 @@ void switch_to_screen(int screen)
 
 void screen_swipe_cb(lv_event_t * e) 
 {
+    if (monitor.sleeping)
+        return;
     lv_dir_t dir = lv_indev_get_gesture_dir(lv_indev_get_act());
     if (dir == LV_DIR_LEFT) {
         current_screen = (current_screen + 1) % NUM_SCREENS;

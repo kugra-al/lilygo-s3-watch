@@ -1,9 +1,11 @@
+#include "LilyGoWatchS3.h"
 #include <WiFi.h>
 #include <LilyGoLib.h>
 #include "hw_monitor.h"
 
 hw_monitor_t monitor;
 int last_event = 0;
+bool is_sleeping = false;
 
 void hw_update_monitor()
 {
@@ -18,6 +20,21 @@ void hw_update_monitor()
     monitor.local_ip = WiFi.localIP().toString().c_str();
     monitor.gateway_ip = WiFi.gatewayIP().toString().c_str();
     monitor.orientation = instance.sensor.direction();
+    monitor.sleeping = is_sleeping;
 }
 
+void fake_sleep()
+{
+    instance.setBrightness(DEVICE_MIN_BRIGHTNESS_LEVEL);
+    is_sleeping = true;
+    Serial.println("Faking sleep");
+    hw_update_monitor();
+}
 
+void wakeup()
+{
+    instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
+    is_sleeping = false;
+    Serial.println("Waking up");
+    hw_update_monitor();
+}
