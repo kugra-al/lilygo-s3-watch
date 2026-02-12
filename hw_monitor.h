@@ -13,5 +13,6 @@ typedef struct {
 } hw_monitor_t;
 
 extern hw_monitor_t monitor;
+extern int last_event;
 
 void hw_update_monitor();

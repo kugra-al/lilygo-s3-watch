@@ -3,6 +3,7 @@
 #include "hw_monitor.h"
 
 hw_monitor_t monitor;
+int last_event = 0;
 
 void hw_update_monitor()
 {

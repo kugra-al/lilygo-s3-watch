@@ -24,6 +24,7 @@
 
 const char* ntpServer = "pool.ntp.org";  // European pool
 
+
 static unsigned long last_millis = 0, wifi_start_time = 0, last_weather_check = 0, 
     last_wifi_check = 0, last_status_check = 0, last_time_sync = 0;
 
@@ -57,21 +58,44 @@ static void check_wifi()
     lv_obj_add_style(wifi_label, &style_wifi, LV_PART_MAIN);
 }
 
+void device_event_cb(DeviceEvent_t event, void*params, void*user_data)
+{
+    Serial.println("Event detected");
+    switch (instance.getPMUEventType(params)) {
+        case PMU_EVENT_KEY_CLICKED:
+        case PMU_EVENT_KEY_LONG_PRESSED:
+        case PMU_EVENT_USBC_REMOVE:
+        case PMU_EVENT_USBC_INSERT:
+        case PMU_EVENT_CHARGE_STARTED:
+        case PMU_EVENT_CHARGE_FINISH: 
+            Serial.println("Power event detected");
+            last_event = millis();
+            break;
+        default: return;
+    }
+}
 
 void setup()
 {
     Serial.begin(115200);
     instance.begin();
     beginLvglHelper(instance);
+    instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
+    instance.onEvent([](DeviceEvent_t event, void *params, void * user_data) {
+        if (instance.getPMUEventType(params) == PMU_EVENT_KEY_CLICKED) {
+            Serial.println("Power key pressed");
+        }
+    }, POWER_EVENT, NULL);
+    
     hw_update_monitor();
     init_styles();
     init_screens();
     switch_to_screen(CLOCK_SCREEN);
     check_wifi();
-    instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
     ui_alarm.hour = get_int_key_value("ui_alarm_hour", 0);
     ui_alarm.minute = get_int_key_value("ui_alarm_min", 0);
     ui_alarm.set = get_bool_key_value("ui_alarm_set", false);
+    //instance.pmu.enableBattDetection();
 }
 
 void loop()
@@ -95,6 +119,10 @@ void loop()
         last_wifi_check = current_millis;
         check_wifi();
     }
+    if (last_event && current_millis - last_event >= TWO_MINUTES) {
+    //    instance.lightSleep();
+    }
+
     if (monitor.wifi_connected && (current_millis - last_weather_check >= THIRTY_MINUTES || !last_weather_check)) {
         last_weather_check = current_millis;
        // if (current_screen == CLOCK_SCREEN) {

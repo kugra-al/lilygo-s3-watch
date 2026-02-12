@@ -53,6 +53,7 @@ void alarm_start()
     ui_alarm.running = true;
     ui_alarm.end_time = millis()+ONE_MINUTE;
     init_popup("Alarm", "Stop", alarm_stop_btn_cb);
+    last_event = millis();
 }
 
 void alarm_stop()
@@ -61,6 +62,7 @@ void alarm_stop()
     ui_alarm.running = false;
     ui_alarm.set = false;
     lv_obj_add_flag(popup, LV_OBJ_FLAG_HIDDEN);
+    last_event = millis();
 }
 
 void alarm_alert() {
@@ -487,6 +489,7 @@ void switch_to_screen(int screen)
     lv_scr_load(screens[screen]);
     if (current_screen != screen)   
         current_screen = screen;
+    last_event = millis();
 }
 
 void screen_swipe_cb(lv_event_t * e) 
