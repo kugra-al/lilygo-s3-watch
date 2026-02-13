@@ -57,23 +57,6 @@ static void check_wifi()
     lv_obj_add_style(wifi_label, &style_wifi, LV_PART_MAIN);
 }
 
-void device_event_cb(DeviceEvent_t event, void*params, void*user_data)
-{
-    Serial.println("Event detected");
-    switch (instance.getPMUEventType(params)) {
-        case PMU_EVENT_KEY_CLICKED:
-        case PMU_EVENT_KEY_LONG_PRESSED:
-        case PMU_EVENT_USBC_REMOVE:
-        case PMU_EVENT_USBC_INSERT:
-        case PMU_EVENT_CHARGE_STARTED:
-        case PMU_EVENT_CHARGE_FINISH: 
-            Serial.println("Power event detected");
-            last_event = millis();
-            break;
-        default: return;
-    }
-}
-
 void setup()
 {
     Serial.begin(115200);
@@ -86,8 +69,7 @@ void setup()
             if (monitor.sleeping)
                 wakeup();
             Serial.println("Power button pressed");
-        } else
-        if (instance.getPMUEventType(params) == PMU_EVENT_KEY_LONG_PRESSED) {
+        } else if (instance.getPMUEventType(params) == PMU_EVENT_KEY_LONG_PRESSED) {
             if (monitor.sleeping)
                 wakeup();
             else
@@ -110,33 +92,35 @@ void loop()
 {
     lv_timer_handler();
     instance.loop();
-    int current_millis = millis();
-    // simple check for seconds (change to use lv_timer later)
-    if (current_millis - last_millis >= ONE_SECOND) {
-        last_millis = current_millis;
-        update_time();
-        if (current_screen == CLOCK_SCREEN)
-            update_date();
-    }
-    if (current_millis - last_status_check >= FIVE_SECONDS) {
-        last_status_check = current_millis;
-        hw_update_monitor();
-        refresh_screen_headers();
-        ui_refresh_sensor_labels();
-    }
-    if (current_millis - last_wifi_check >= ONE_MINUTE) {
-        last_wifi_check = current_millis;
-        check_wifi();
-    }
-    if (!monitor.sleeping && last_event && current_millis - last_event >= TWO_MINUTES) {
-        //instance.sleep(WAKEUP_SRC_POWER_KEY);
-        // Fake sleep because wakeup from power key doesn't work correctly  
-        fake_sleep();
-    }
+    if (!monitor.sleeping) {
+        int current_millis = millis();
+        // simple check for seconds (change to use lv_timer later)
+        if (current_millis - last_millis >= ONE_SECOND) {
+            last_millis = current_millis;
+            update_time();
+            if (current_screen == CLOCK_SCREEN)
+                update_date();
+        }
+        if (current_millis - last_status_check >= FIVE_SECONDS) {
+            last_status_check = current_millis;
+            hw_update_monitor();
+            refresh_screen_headers();
+            ui_refresh_sensor_labels();
+        }
+        if (current_millis - last_wifi_check >= ONE_MINUTE) {
+            last_wifi_check = current_millis;
+            check_wifi();
+        }
+        if (last_event && current_millis - last_event >= TWO_MINUTES) {
+            //instance.sleep(WAKEUP_SRC_POWER_KEY);
+            // Fake sleep because wakeup from power key doesn't work correctly  
+            fake_sleep();
+        }
 
-    if (monitor.wifi_connected && (current_millis - last_weather_check >= THIRTY_MINUTES || !last_weather_check)) {
-        last_weather_check = current_millis;
-        update_weather();      
+        if (monitor.wifi_connected && (current_millis - last_weather_check >= THIRTY_MINUTES || !last_weather_check)) {
+            last_weather_check = current_millis;
+            update_weather();      
+        }
     }
     delay(250);
 }
