@@ -23,7 +23,7 @@
 #include "hw_monitor.h"
 
 const char* ntpServer = "pool.ntp.org";  // European pool
-
+int last_button_click = 0;
 static unsigned long last_millis = 0, wifi_start_time = 0, last_weather_check = 0, 
     last_wifi_check = 0, last_status_check = 0, last_time_sync = 0;
 
@@ -69,15 +69,17 @@ void setup()
             if (monitor.sleeping)
                 wakeup();
             Serial.println("Power button pressed");
-        } else if (instance.getPMUEventType(params) == PMU_EVENT_KEY_LONG_PRESSED) {
-            if (monitor.sleeping)
-                wakeup();
-            else
+            if (millis() - last_button_click <= ONE_SECOND) {
+                Serial.println("Double click detected");
                 fake_sleep();
+            }
+            last_button_click = millis();
+        } else if (instance.getPMUEventType(params) == PMU_EVENT_KEY_LONG_PRESSED) {
             Serial.println("Power button long pressed");
         }
     }, POWER_EVENT, NULL);
-    
+
+    mount_file_system();
     hw_update_monitor();
     init_styles();
     init_screens();

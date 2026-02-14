@@ -1,7 +1,18 @@
 #include <Arduino.h>
+#include <FS.h>
+#include <FFat.h>
 #include "cache.h"
 
 Preferences cache;
+
+void mount_file_system()
+{
+    if (!FFat.begin(false)) {
+        Serial.println("FFat mount failed");
+    } else {
+        Serial.println("FFat mount succeeded");
+    }
+}
 
 void putStringKV(const char* key, String value) {
     cache.begin(key, false);
