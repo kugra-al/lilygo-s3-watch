@@ -78,14 +78,14 @@ void update_date()
 {
     struct tm timeinfo;
     if (!getLocalTime(&timeinfo)) {
-        lv_label_set_text(date_label, getStringKV("date", "Date: --").c_str());
+        lv_label_set_text(date_label, get_string_key_value("date", "Date: --").c_str());
         return;
     }
     static lv_obj_t *battery_label;
     char date[20];
     size_t len = strftime(date, sizeof(date), "%a. %Y-%m-%d", &timeinfo);
     String date_str = (String)date;
-    putStringKV("date", date_str);
+    put_string_key_value("date", date_str);
     lv_label_set_text(date_label, date_str.c_str());  // "Mon 2026-01-05"
 }
 
@@ -94,10 +94,10 @@ void update_time()
     struct tm timeinfo;
     if(!getLocalTime(&timeinfo)) {
         if (current_screen == CLOCK_SCREEN) {
-            lv_label_set_text(time_label, getStringKV("time", "--:--:--").c_str());
-            lv_label_set_text(time_label_2, getStringKV("time_2", "--:--:--").c_str());
+            lv_label_set_text(time_label, get_string_key_value("time", "--:--:--").c_str());
+            lv_label_set_text(time_label_2, get_string_key_value("time_2", "--:--:--").c_str());
         } else {
-            lv_label_set_text(time_label_2, getStringKV("time", "--:--:--").c_str());
+            lv_label_set_text(time_label_2, get_string_key_value("time", "--:--:--").c_str());
         }
         return;
     }
@@ -115,8 +115,8 @@ void update_time()
         (const char*)"%02d:%02d:%02d",
         time2info.tm_hour, time2info.tm_min, time2info.tm_sec);
 
-    putStringKV("time", time_cacheBuf);
-    putStringKV("time_2", time_2_cacheBuf);
+    put_string_key_value("time", time_cacheBuf);
+    put_string_key_value("time_2", time_2_cacheBuf);
     // Use real RTC time
     if (current_screen == CLOCK_SCREEN) { // On clock screen, show time_2 as the offset
         lv_label_set_text(time_label, time_cacheBuf);
@@ -206,7 +206,7 @@ void update_weather()
             char cacheBuf[24];
             snprintf(cacheBuf, sizeof(cacheBuf),
                 "Rise: %s Set: %s", sunrise, sunset);
-            putStringKV("suntimes", cacheBuf);
+            put_string_key_value("suntimes", cacheBuf);
             lv_label_set_text(sun_status, cacheBuf);
             JsonArray timeArr = doc["daily"]["time"];
             JsonArray tempMinArr = doc["daily"]["temperature_2m_min"];

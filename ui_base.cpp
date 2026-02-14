@@ -81,14 +81,13 @@ lv_obj_t *ui_add_aligned_label(char *cache_key, char *default_text, lv_obj_t *al
 {
     lv_obj_t *label = lv_label_create(screen);        /*Add a label the current screen*/
     if (cache_key)
-        lv_label_set_text_fmt(label, getStringKV(cache_key, default_text).c_str());                 /*Set label text*/
+        lv_label_set_text_fmt(label, get_string_key_value(cache_key, default_text).c_str());                 /*Set label text*/
     else
         lv_label_set_text(label, String(default_text).c_str());
 
-    if (sizes != NULL) {
-        lv_obj_set_width(label, sizes->width);
-        lv_obj_set_height(label, sizes->height);
-    }
+    if (sizes != NULL) 
+        lv_obj_set_size(label, sizes->width, sizes->height);
+
     if (aligns != NULL) {
         if (aligns->text_align != NULL)  
             lv_obj_set_style_text_align(label, aligns->text_align, 0);                                 /*Set center alignment*/
@@ -123,7 +122,7 @@ lv_obj_t *ui_add_button(char *cache_key, char *default_text, lv_obj_t *align_to_
 
     lv_obj_t *btn_label = lv_label_create(btn);           /*Add a label to the button*/
     if (cache_key)
-        lv_label_set_text(btn_label, getStringKV(cache_key, default_text).c_str());               /*Set the labels text*/
+        lv_label_set_text(btn_label, get_string_key_value(cache_key, default_text).c_str());               /*Set the labels text*/
     else
         lv_label_set_text(btn_label, String(default_text).c_str());
     lv_obj_center(btn_label);

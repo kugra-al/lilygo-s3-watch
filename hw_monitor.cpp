@@ -1,3 +1,5 @@
+// Handles hardware monitor and sleep/wake functions
+
 #include "LilyGoWatchS3.h"
 #include <WiFi.h>
 #include <LilyGoLib.h>
@@ -23,6 +25,9 @@ void hw_update_monitor()
     monitor.sleeping = is_sleeping;
 }
 
+// Here we just dim the screen and block some loops. lightSleep and sleep both have some problems with what 
+// they block and waking up correctly. At some point, do some battery readings so we can see if this 
+// is good enough or not
 void fake_sleep()
 {
     instance.setBrightness(DEVICE_MIN_BRIGHTNESS_LEVEL);

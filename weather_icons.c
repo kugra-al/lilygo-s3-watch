@@ -4,6 +4,7 @@
  * Opts: --bpp 1 --size 24 --no-compress --stride 1 --align 1 --font WeatherSymbols.ttf --symbols ABCDEFGHIJKLMNOP --format lvgl -o weather_icons.c
  ******************************************************************************/
 // Font glyphs from https://www.dafont.com/weather-symbols.charmap
+// Need a better one
 
 #ifdef __has_include
     #if __has_include("lvgl.h")

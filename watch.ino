@@ -100,7 +100,7 @@ void loop()
         if (current_millis - last_millis >= ONE_SECOND) {
             last_millis = current_millis;
             update_time();
-            if (current_screen == CLOCK_SCREEN)
+            if (current_screen == CLOCK_SCREEN) // Move to check if there's no valid date, or midnight
                 update_date();
         }
         if (current_millis - last_status_check >= FIVE_SECONDS) {
@@ -114,7 +114,6 @@ void loop()
             check_wifi();
         }
         if (last_event && current_millis - last_event >= TWO_MINUTES) {
-            //instance.sleep(WAKEUP_SRC_POWER_KEY);
             // Fake sleep because wakeup from power key doesn't work correctly  
             fake_sleep();
         }
