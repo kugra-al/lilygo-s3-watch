@@ -11,6 +11,7 @@ typedef struct {
     String gateway_ip;
     int orientation;
     bool sleeping;
+    float freemem;
 } hw_monitor_t;
 
 extern hw_monitor_t monitor;

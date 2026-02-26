@@ -9,6 +9,9 @@ typedef struct {
 } size_cfg_t;
 
 #define LV_COLOR_TRANSP  lv_color_hex(0x00ff00) 
+#define CONTENT_HEIGHT 160
+#define CONTENT_HEIGHT_BUTTONS 140
+#define INNER_CONTENT_WIDTH 230
 
 static lv_color_t color_green = lv_color_hex(0x39FF14);
 static lv_color_t color_red = lv_color_hex(0xFF0000);
@@ -30,10 +33,16 @@ extern lv_style_t style_wifi;
 extern lv_style_t style_charge;
 extern lv_style_t style_weather;
 extern lv_style_t style_grid;
+extern lv_style_t style_container;
+extern lv_style_t style_title;
+extern lv_style_t style_keyboard;
 
 void init_styles();
 lv_obj_t *ui_add_aligned_label(char *cache_key, char *default_text, lv_obj_t *align_to_obj, lv_style_t *style, align_cfg_t *aligns, size_cfg_t *sizes, lv_obj_t *screen);
 lv_obj_t *ui_add_button(char *cache_key, char *default_text, lv_obj_t *align_to_obj, lv_style_t *style, void (*callback)(lv_event_t *), 
   align_cfg_t *aligns, size_cfg_t *sizes, lv_obj_t *screen);
 lv_obj_t *ui_add_title_label(char *label_text, lv_obj_t *screen);
+lv_obj_t *ui_add_content_container(int height, lv_obj_t *title, lv_obj_t *screen);
+lv_obj_t *ui_add_button_row(lv_obj_t *screen);
 lv_obj_t *init_popup(char *label_text, char *btn_text, void (*callback)(lv_event_t *));
+lv_obj_t *ui_keyboard_show();

@@ -3,11 +3,12 @@ extern lv_obj_t *date_label, *clock_temp_label, *clock_wind_label, *current_weat
 extern lv_obj_t *status_label;
 extern lv_obj_t *wifi_label, *battery_label, *charge_label, *bluetooth_label, *gps_label, *alarm_symbol_label;
 extern lv_obj_t *status_ssid_value_label, *status_local_ip_value_label, *status_gateway_ip_value_label, 
-    *status_power_value_label, *status_temp_value_label;
+    *status_power_value_label, *status_temp_value_label, *status_vbus_value_label, *status_sysvolt_value_label, 
+    *status_mem_value_label;
 extern lv_obj_t *alarm_time_label, *alarm_hours_roller, *alarm_minutes_roller;
 extern lv_obj_t *popup;
 extern lv_obj_t *weather_screen_label, *weather_screen_status_label;
-
+extern lv_obj_t *wifi_scan_container;
 extern int current_screen;
 
 typedef struct {
@@ -19,21 +20,24 @@ typedef struct {
 } alarm_cfg_t;
 
 extern alarm_cfg_t ui_alarm;
-static lv_obj_t *screens[4];
+static lv_obj_t *screens[5];
 #define NUM_SCREENS (sizeof(screens) / sizeof(screens[0]))
 
 #define CLOCK_SCREEN 0
 #define STATUS_SCREEN 1
 #define WEATHER_SCREEN 2
 #define ALARM_SCREEN 3
-#define GRID_SCREEN 4
+#define WIFI_SCREEN 4
 
 void draw_clock_screen();
 void draw_status_screen();
 void draw_alarm_screen();
 void draw_weather_screen();
+void draw_wifi_screen();
 void draw_numpad();
 void ui_refresh_sensor_labels();
+void ui_update_wifi(int result);
+void ui_print_wifi_scan();
 void init_screens();
 void switch_to_screen(int screen);
 void update_time();

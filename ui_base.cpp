@@ -17,6 +17,44 @@ lv_style_t style_charge;
 lv_style_t style_wifi;
 lv_style_t style_weather;
 lv_style_t style_grid;
+lv_style_t style_container;
+lv_style_t style_title;
+lv_style_t style_keyboard;
+
+void init_style_keyboard()
+{
+    lv_style_init(&style_keyboard);
+
+    /* Black background for keys */
+    lv_style_set_bg_color(&style_keyboard, lv_color_black());
+    lv_style_set_bg_opa(&style_keyboard, LV_OPA_COVER);
+
+    /* Green border */
+    lv_style_set_border_width(&style_keyboard, 1);
+    lv_style_set_border_color(&style_keyboard, color_default);
+    lv_style_set_border_opa(&style_keyboard, LV_OPA_COVER);
+
+    /* Green text */
+    lv_style_set_text_color(&style_keyboard, color_default);
+}
+
+void init_style_container()
+{
+    lv_style_init(&style_container);
+    lv_style_set_text_font(&style_container, &lv_font_montserrat_16);
+    lv_style_set_text_color(&style_container, color_default);
+    lv_style_set_border_width(&style_container, 1);
+    lv_style_set_border_color(&style_container, color_default);
+    lv_style_set_bg_color(&style_container, lv_color_black());
+    lv_style_set_pad_top(&style_container, 5);
+    lv_style_set_pad_left(&style_container, 5);
+    lv_style_set_pad_bottom(&style_container, 5);
+    lv_style_set_pad_right(&style_container, 5);
+    lv_style_set_margin_top(&style_container, 0);
+    lv_style_set_margin_left(&style_container, 0);
+    lv_style_set_margin_bottom(&style_container, 0);
+    lv_style_set_margin_right(&style_container, 0);
+}
 
 void init_style_grid()
 {
@@ -36,6 +74,7 @@ void init_style_grid()
     lv_style_set_margin_bottom(&style_grid, 0);
     lv_style_set_margin_right(&style_grid, 0);
 }
+
 void init_styles()
 {
     typedef struct {
@@ -60,7 +99,8 @@ void init_styles()
         { &style_roller_selected, &lv_font_montserrat_18, lv_color_black(), color_default, lv_color_black(), 1},
         { &style_charge, &lv_font_montserrat_16, color_yellow, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
         { &style_wifi, &lv_font_montserrat_16, color_red, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
-        { &style_weather, &weather_icons, color_default, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL }
+        { &style_weather, &weather_icons, color_default, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
+        { &style_title, &lv_font_montserrat_24, color_default, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL}
     };
     
     for (int i = 0; i < sizeof(styles) / sizeof(styles[0]); i++) {
@@ -74,6 +114,8 @@ void init_styles()
         }
     }
     init_style_grid();
+    init_style_container();
+    init_style_keyboard();
 }
 
 lv_obj_t *ui_add_aligned_label(char *cache_key, char *default_text, lv_obj_t *align_to_obj, 
@@ -134,10 +176,36 @@ lv_obj_t *ui_add_button(char *cache_key, char *default_text, lv_obj_t *align_to_
 lv_obj_t *ui_add_title_label(char *label_text, lv_obj_t *screen)
 {
     align_cfg_t title_label_align = {0, 40, LV_ALIGN_TOP_MID, LV_TEXT_ALIGN_AUTO};
-    size_cfg_t title_label_size = {40, 180};
-    lv_obj_t *title_label = ui_add_aligned_label(NULL, label_text, NULL, &style_default_large, &title_label_align, 
+    size_cfg_t title_label_size = {30, LV_HOR_RES};
+    lv_obj_t *title_label = ui_add_aligned_label(NULL, label_text, NULL, &style_title, &title_label_align, 
         &title_label_size, screen);
     return title_label;
+}
+
+lv_obj_t *ui_add_content_container(int height, lv_obj_t *title, lv_obj_t *screen)
+{
+    lv_obj_t *container = lv_obj_create(screen);
+    lv_obj_set_size(container, LV_HOR_RES, height);
+    lv_obj_add_style(container, &style_container, LV_PART_MAIN);
+    lv_obj_set_scroll_dir(container, LV_DIR_VER);
+    lv_obj_align_to(container, title, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 0);
+
+    return container;
+}
+
+lv_obj_t *ui_add_button_row(lv_obj_t *screen)
+{
+    lv_obj_t *container = lv_obj_create(screen);
+    lv_obj_set_size(container, LV_HOR_RES, 40);
+    lv_obj_add_style(container, &style_grid, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(container, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_border_color(container, color_default, LV_PART_MAIN);
+    lv_obj_set_style_border_width(container, 1, LV_PART_MAIN);
+    lv_obj_set_style_border_side(container, LV_BORDER_SIDE_TOP, LV_PART_MAIN);
+    lv_obj_clear_flag(container, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_align(container, LV_ALIGN_BOTTOM_MID, 0, 0);
+
+    return container;
 }
 
 lv_obj_t *init_popup(char *label_text, char *btn_text, void (*callback)(lv_event_t *))
@@ -152,4 +220,15 @@ lv_obj_t *init_popup(char *label_text, char *btn_text, void (*callback)(lv_event
         ui_add_button(NULL, btn_text, label, &style_default_small, callback, &btn_align, &btn_size, popup);
     }
     return popup;
+}
+
+lv_obj_t *ui_keyboard_show()
+{
+    lv_obj_t *keyboard = lv_keyboard_create(screens[current_screen]);
+    return keyboard;
+}
+
+lv_obj_t *ui_keyboard_hide()
+{
+    
 }

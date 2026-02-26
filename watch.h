@@ -5,3 +5,13 @@
 #define TWO_MINUTES ONE_MINUTE*2
 #define THIRTY_MINUTES 1800000
 #define TWELVE_HOURS 43200000
+
+typedef struct {
+    char ssid[33];
+    bool connected;
+} wifi_t;
+
+extern wifi_t *scannedNetworks;
+extern size_t  scannedCount;
+
+void start_wifi_scan();

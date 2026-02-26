@@ -26,24 +26,103 @@ const char* ntpServer = "pool.ntp.org";  // European pool
 int last_button_click = 0;
 static unsigned long last_millis = 0, wifi_start_time = 0, last_weather_check = 0, 
     last_wifi_check = 0, last_status_check = 0, last_time_sync = 0;
-
+bool saved_defined_network = false, wifi_scanning = false;
+int wifi_connection_attempts = 0;
 
 typedef struct {
     char hours[8], minutes[8];
 } alarm_t;
 
+wifi_t *scannedNetworks = nullptr;
+size_t  scannedCount    = 0;
+
+bool ssid_exists(const char *ssid) {
+    for (size_t i = 0; i < scannedCount; ++i) {
+        if (strcmp(scannedNetworks[i].ssid, ssid) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static void save_stored_networks(int n)
+{
+    // Reallocate array to exact size
+    free(scannedNetworks);
+    scannedNetworks = (wifi_t *)malloc(n * sizeof(wifi_t));
+    scannedCount = 0;                 
+    if (!scannedNetworks) {
+        return;
+    }
+
+    for (int i = 0; i < n; ++i) {
+        String ssidStr = WiFi.SSID(i);     
+        // Remove empty and dupes
+        if (ssidStr.length() == 0 || ssid_exists(ssidStr.c_str()))
+            continue;
+        strncpy(scannedNetworks[scannedCount].ssid,
+                ssidStr.c_str(),
+                sizeof(scannedNetworks[scannedCount].ssid) - 1);
+        scannedNetworks[scannedCount].ssid[
+            sizeof(scannedNetworks[scannedCount].ssid) - 1] = '\0';
+        scannedNetworks[i].connected = false;
+        scannedCount++;
+    }
+    ui_print_wifi_scan();
+}
+
+static void connect_to_saved_wifi()
+{
+    DynamicJsonDocument nets(4096);
+    read_JSON("/wifi.json", nets);
+    Serial.println("Read json successfully");
+    JsonArray networks = nets["networks"].as<JsonArray>();
+    Serial.println("Network read success");
+    serializeJson(nets, Serial);
+    Serial.println();
+    if (scannedCount == 0 || !scannedNetworks) {
+        Serial.printf("No networks_found: %d\n", scannedCount);
+        return;
+    }
+    for (JsonObject net : networks) {
+        for (size_t i = 0; i < scannedCount; i++) {
+            Serial.println("Found network:");
+            Serial.println(scannedNetworks[i].ssid);
+            if (String(scannedNetworks[i].ssid) == net["ssid"]) {
+                WiFi.begin(net["ssid"] | "", net["password"] | "");
+                Serial.printf("Connecting to: %s %s\n", String(net["ssid"]).c_str(), String(net["password"]).c_str());
+                WiFi.scanDelete();
+                return;
+            }
+        }
+    }
+}
+
+void start_wifi_scan()
+{
+    WiFi.mode(WIFI_STA);
+    WiFi.disconnect();
+    WiFi.scanNetworks(true, false);
+    Serial.println("Starting wifi scan"); 
+    wifi_scanning = true;
+    wifi_connection_attempts++;
+}
 static void check_wifi()
 {
     Serial.println("Wifi check");
     if (!monitor.wifi_connected) {
+        if (!saved_defined_network) {
+            save_wifi_to_file(WIFI_SSID, WIFI_PASSWORD);
+            saved_defined_network = true;
+        }
         lv_style_set_text_color(&style_wifi, color_red);
-        Serial.println("Attempting wifi connect");
-        WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+        start_wifi_scan();
     } else {
+        ui_print_wifi_scan();
         lv_style_set_text_color(&style_wifi, color_green);
         Serial.print("WiFi connected! IP: ");
         Serial.println(WiFi.localIP());
-
+        // for (int i = 0; i < n; ++i) {
         if (!last_time_sync) {
             configTime(GMTOFFSET_SEC, DAYLIGHTOFFSET_SEC, ntpServer);
             struct tm timeinfo;
@@ -68,6 +147,8 @@ void setup()
             last_event = millis();
             if (monitor.sleeping)
                 wakeup();
+            else
+                switch_to_screen(CLOCK_SCREEN);
             Serial.println("Power button pressed");
             if (millis() - last_button_click <= ONE_SECOND) {
                 Serial.println("Double click detected");
@@ -78,7 +159,6 @@ void setup()
             Serial.println("Power button long pressed");
         }
     }, POWER_EVENT, NULL);
-
     mount_file_system();
     hw_update_monitor();
     init_styles();
@@ -102,6 +182,16 @@ void loop()
             update_time();
             if (current_screen == CLOCK_SCREEN) // Move to check if there's no valid date, or midnight
                 update_date();
+            if (wifi_scanning) {
+                int result = WiFi.scanComplete();
+                Serial.printf("Scan result %d\n", result);
+                ui_update_wifi(result);
+                if (result >= 0) {
+                    save_stored_networks(result);
+                    connect_to_saved_wifi();
+                    wifi_scanning = false;
+                }
+            }
         }
         if (current_millis - last_status_check >= FIVE_SECONDS) {
             last_status_check = current_millis;

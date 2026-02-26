@@ -23,6 +23,7 @@ void hw_update_monitor()
     monitor.gateway_ip = WiFi.gatewayIP().toString().c_str();
     monitor.orientation = instance.sensor.direction();
     monitor.sleeping = is_sleeping;
+    monitor.freemem = ESP.getFreeHeap();
 }
 
 // Here we just dim the screen and block some loops. lightSleep and sleep both have some problems with what 
