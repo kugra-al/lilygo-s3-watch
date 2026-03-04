@@ -20,7 +20,7 @@ lv_obj_t *date_label, *clock_temp_label, *clock_wind_label, *current_weather, *s
 lv_obj_t *wifi_label, *battery_label, *charge_label, *bluetooth_label, *gps_label, *alarm_symbol_label;
 lv_obj_t *status_ssid_value_label, *status_local_ip_value_label, *status_gateway_ip_value_label, 
     *status_power_value_label, *status_temp_value_label, *status_vbus_value_label, *status_sysvolt_value_label, 
-    *status_mem_value_label;
+    *status_mem_value_label, *alarm_time_status_label, *status_ffat_value_label;
 lv_obj_t *alarm_time_label, *alarm_hours_roller, *alarm_minutes_roller;
 lv_obj_t *popup;
 lv_obj_t *weather_screen_label, *weather_screen_status_label;
@@ -140,6 +140,9 @@ void update_time()
                 alarm_alert();
             }
         }
+        lv_label_set_text(alarm_time_status_label, "Set");
+    } else {
+        lv_label_set_text(alarm_time_status_label, "Unset");
     }
 }
 
@@ -265,9 +268,8 @@ static void wifi_item_event_cb(lv_event_t *e)
     }
     lv_obj_t *ssid_label = lv_obj_get_child(clicked, 0);
     if (ssid_label) {
-        // Get the label text and COPY it to your array
         lv_obj_t * ssid_label = lv_obj_get_child(clicked, 0);
-        const char * text = lv_label_get_text(ssid_label);
+        const char *text = (const char *)lv_obj_get_user_data(clicked);
         strncpy(wifi_ssid_selected, text, 32);
         wifi_ssid_selected[32] = '\0';  // Force null termination
 
@@ -277,31 +279,53 @@ static void wifi_item_event_cb(lv_event_t *e)
     lv_obj_add_state(clicked, LV_STATE_CHECKED);
 }
 
+// Antenna on twatch is bad. -69 is right next to a router
+int rssi_to_bars(int rssi) {
+  if (rssi >= -60) return 5;
+  if (rssi >= -80) return 4;
+  if (rssi >= -90) return 3;
+  if (rssi >= -100) return 2;
+  return 1;
+}
+
 // this crashes sometimes
 void ui_print_wifi_scan() {
     lv_obj_clean(wifi_scan_container);
-    lv_obj_t *label = lv_label_create(wifi_scan_container);
-    lv_label_set_text(label, "Avaliable networks:");
-    lv_obj_align(label, LV_ALIGN_TOP_LEFT, 0, 0);
     
     lv_obj_t *list = lv_list_create(wifi_scan_container);
-    lv_obj_align_to(list, label, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 0);
+    lv_obj_align(list, LV_ALIGN_TOP_LEFT, 0, 0);
     lv_obj_add_style(list, &style_container, LV_PART_MAIN);
     lv_obj_set_width(list, INNER_CONTENT_WIDTH);
     for (size_t i = 0; i < scannedCount; i++) {
-        char ssidBuf[33];
+        char ssidBuf[64];
         snprintf(ssidBuf, sizeof(ssidBuf), "%s", scannedNetworks[i].ssid);
         if (strcmp(monitor.ssid.c_str(), scannedNetworks[i].ssid) == 0)
             snprintf(ssidBuf, sizeof(ssidBuf), "%s " LV_SYMBOL_WIFI, scannedNetworks[i].ssid);
-        
+        if (scannedNetworks[i].encryption != WIFI_AUTH_OPEN) {
+            char temp[64];
+            snprintf(temp, sizeof(temp), "%s %s", ssidBuf, LV_SYMBOL_WARNING);
+            strncpy(ssidBuf, temp, sizeof(ssidBuf));
+        }
+        // RSSI number (always)
+        char temp[64];
+        Serial.printf("Rssi for %s: %d\n", scannedNetworks[i].ssid, scannedNetworks[i].rssi);
+        snprintf(temp, sizeof(temp), "%s %d*", ssidBuf, rssi_to_bars(scannedNetworks[i].rssi));
+        strncpy(ssidBuf, temp, sizeof(ssidBuf));
+        ssidBuf[sizeof(ssidBuf)-1] = '\0';
+
+       //         scannedNetworks[i].rssi = WiFi.RSSI(i);
+      //  scannedNetworks[i].encryption = WiFi.encryptionType(i);
+      //  scannedNetworks[i].channel = WiFi.channel(i);
         lv_obj_t *item = lv_list_add_btn(list, NULL, ssidBuf);
         lv_obj_add_flag(item, LV_OBJ_FLAG_CHECKABLE);
         lv_label_set_long_mode(lv_obj_get_child(item, 0), LV_LABEL_LONG_WRAP);
         lv_obj_add_style(item, &style_container, LV_PART_MAIN);
+        lv_obj_add_style(item, &style_default_small, LV_PART_MAIN);
         lv_obj_set_style_bg_color(item, lv_color_black(), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_color(item, color_default, LV_PART_MAIN | LV_STATE_CHECKED);
         lv_obj_set_style_text_color(item, lv_color_black(), LV_PART_MAIN | LV_STATE_CHECKED);
         lv_obj_add_event_cb(item, wifi_item_event_cb, LV_EVENT_CLICKED, NULL);
+        lv_obj_set_user_data(item, (void*)scannedNetworks[i].ssid);
     }
 }
 
@@ -344,7 +368,9 @@ void ui_refresh_sensor_labels()
     snprintf(mem_cacheBuf, sizeof(mem_cacheBuf),
         "%.1f kB", monitor.freemem / 1024.0);
     lv_label_set_text(status_mem_value_label, mem_cacheBuf);
-
+    lv_label_set_text_fmt(status_ffat_value_label, "%.3f/%.2f MB", 
+        monitor.disk_used_bytes / (1024.0 * 1024.0),
+        monitor.disk_bytes / (1024.0 * 1024.0));
 }
 
 void refresh_screen_headers()
@@ -476,7 +502,8 @@ void draw_alarm_screen()
     lv_obj_align(alarm_hours_roller, LV_ALIGN_TOP_LEFT, 10, 0);
     lv_roller_set_visible_row_count(alarm_hours_roller, 3);
     lv_obj_add_event_cb(alarm_hours_roller, alarm_time_change_event_handler, LV_EVENT_VALUE_CHANGED, NULL);
-    
+    lv_roller_set_selected(alarm_hours_roller, get_int_key_value("ui_alarm_hour", 0), LV_ANIM_OFF);
+
     alarm_minutes_roller = lv_roller_create(content);
     //lv_obj_set_size(alarm_minutes_roller, 60, 80);
     lv_obj_add_style(alarm_minutes_roller, &style_roller, LV_PART_MAIN);
@@ -490,6 +517,7 @@ void draw_alarm_screen()
     lv_roller_set_options(alarm_minutes_roller, minute_opts, LV_ROLLER_MODE_INFINITE);
     lv_roller_set_visible_row_count(alarm_minutes_roller, 3);
     lv_obj_add_event_cb(alarm_minutes_roller, alarm_time_change_event_handler, LV_EVENT_VALUE_CHANGED, NULL);
+    lv_roller_set_selected(alarm_minutes_roller, get_int_key_value("ui_alarm_min", 0), LV_ANIM_OFF); 
 
     lv_obj_t *alarm_container = lv_obj_create(content);
     lv_obj_add_style(alarm_container, &style_container, LV_PART_MAIN);
@@ -497,10 +525,10 @@ void draw_alarm_screen()
     lv_obj_align_to(alarm_container, alarm_minutes_roller, LV_ALIGN_OUT_RIGHT_MID, 10, 0);
     static align_cfg_t aligns = {0, 0, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_CENTER};
     static size_cfg_t alarm_label_size = {20, 80};
-    lv_obj_t *alarm_time_title_label = ui_add_aligned_label(NULL, "Set", NULL, 
+    alarm_time_status_label = ui_add_aligned_label(NULL, "Set", NULL, 
         &style_default_small, &aligns, &alarm_label_size, alarm_container);
     aligns.align = LV_ALIGN_OUT_BOTTOM_LEFT;
-    alarm_time_label = ui_add_aligned_label(NULL, "00:00", alarm_time_title_label, 
+    alarm_time_label = ui_add_aligned_label(NULL, "00:00", alarm_time_status_label, 
         &style_default_medium, &aligns, &alarm_label_size, alarm_container);
     lv_label_set_text_fmt(alarm_time_label, "%02d:%02d", get_int_key_value("ui_alarm_hour", 0), 
         get_int_key_value("ui_alarm_min", 0));
@@ -645,7 +673,7 @@ void draw_status_screen()
     lv_obj_t *status_title_label = ui_add_title_label("Status", screen);
     lv_obj_t *content = ui_add_content_container(CONTENT_HEIGHT_BUTTONS, status_title_label, screen);
     static int32_t col_dsc[] = {100, 140, LV_GRID_TEMPLATE_LAST};
-    static int32_t row_dsc[] = {20, 20, 20, 20, 20, 20, 20, 20, 20, LV_GRID_TEMPLATE_LAST};
+    static int32_t row_dsc[] = {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, LV_GRID_TEMPLATE_LAST};
 
     static align_cfg_t grid_aligns = {0, 0, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_LEFT};
     /*Create a container with grid*/
@@ -722,6 +750,14 @@ void draw_status_screen()
     lv_obj_set_grid_cell(status_mem_value_label, LV_GRID_ALIGN_STRETCH, 1, 1,
                              LV_GRID_ALIGN_STRETCH, 7, 1);
 
+    lv_obj_t *status_ffat_title_label = lv_label_create(container);
+    lv_label_set_text(status_ffat_title_label, "FFat.:");
+    lv_obj_set_grid_cell(status_ffat_title_label, LV_GRID_ALIGN_STRETCH, 0, 1,
+                             LV_GRID_ALIGN_STRETCH, 8, 1);
+    status_ffat_value_label = lv_label_create(container);
+    lv_obj_set_grid_cell(status_ffat_value_label, LV_GRID_ALIGN_STRETCH, 1, 1,
+                             LV_GRID_ALIGN_STRETCH, 8, 1);
+
     lv_obj_t *btn_container = ui_add_button_row(screen);
     align_cfg_t btn_align = {0, 0, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_AUTO};
     size_cfg_t btn_size = {40, 80};
@@ -736,8 +772,8 @@ void kb_event_cb(lv_event_t *e)
     lv_event_code_t code = lv_event_get_code(e);
     lv_obj_t *kb = lv_event_get_target_obj(e);
 
-    if(code == LV_EVENT_CANCEL) {   // Close
-        lv_obj_delete(kb);                                    // hide/close keyboard
+    if(code == LV_EVENT_CANCEL) {   
+        lv_obj_delete(kb);                                    
         lv_obj_delete(wifi_input_box);
         return;
     }
@@ -749,7 +785,9 @@ void kb_event_cb(lv_event_t *e)
         Serial.printf("SSID: %s\n", wifi_ssid_selected);
         WiFi.begin(wifi_ssid_selected, wifi_password);
         save_wifi_to_file(wifi_ssid_selected, wifi_password);            
-        // use 'text' here
+        lv_obj_delete(kb);                                    
+        lv_obj_delete(wifi_input_box);
+        return;
     }
 }
 
@@ -760,9 +798,10 @@ lv_obj_t *show_input_box()
     //lv_msgbox_add_text(mbox, "Password:");                     
     lv_obj_set_width(mbox, 220);
     /* Content area of msgbox */
-    lv_msgbox_add_text_fmt(mbox, "PW for %s", wifi_ssid_selected);
+    lv_msgbox_add_text_fmt(mbox, "%s", wifi_ssid_selected);
     lv_obj_t *content = lv_msgbox_get_content(mbox);                  
     lv_obj_add_style(mbox, &style_container, LV_PART_MAIN);
+    lv_obj_add_style(mbox, &style_default_small, LV_PART_MAIN);
     /* Text area inside msgbox */
     wifi_password_text = lv_textarea_create(content);   
     lv_obj_add_style(wifi_password_text, &style_container, LV_PART_MAIN);                              
@@ -789,7 +828,10 @@ void wifi_connect_button_cb(lv_event_t *e)
         lv_obj_add_style(keyboard, &style_keyboard, LV_PART_ITEMS | LV_STATE_DISABLED);
         /* Send characters into our textarea */
         wifi_input_box = show_input_box();
-        lv_keyboard_set_textarea(keyboard, wifi_password_text);   
+        const char *saved_password = get_wifi_password_for_ssid(wifi_ssid_selected);
+        if (saved_password)
+            lv_textarea_set_text(wifi_password_text, saved_password);
+        lv_keyboard_set_textarea(keyboard, wifi_password_text);
         lv_obj_add_event_cb(keyboard, kb_event_cb, LV_EVENT_ALL, NULL);
         Serial.println("Connect button clicked");
     }

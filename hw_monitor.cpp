@@ -2,6 +2,7 @@
 
 #include "LilyGoWatchS3.h"
 #include <WiFi.h>
+#include <FFat.h>
 #include <LilyGoLib.h>
 #include "hw_monitor.h"
 
@@ -24,6 +25,8 @@ void hw_update_monitor()
     monitor.orientation = instance.sensor.direction();
     monitor.sleeping = is_sleeping;
     monitor.freemem = ESP.getFreeHeap();
+    monitor.disk_bytes = FFat.totalBytes();
+    monitor.disk_used_bytes = FFat.usedBytes();
 }
 
 // Here we just dim the screen and block some loops. lightSleep and sleep both have some problems with what 

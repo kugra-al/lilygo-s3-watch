@@ -4,7 +4,7 @@ extern lv_obj_t *status_label;
 extern lv_obj_t *wifi_label, *battery_label, *charge_label, *bluetooth_label, *gps_label, *alarm_symbol_label;
 extern lv_obj_t *status_ssid_value_label, *status_local_ip_value_label, *status_gateway_ip_value_label, 
     *status_power_value_label, *status_temp_value_label, *status_vbus_value_label, *status_sysvolt_value_label, 
-    *status_mem_value_label;
+    *status_mem_value_label, *alarm_time_status_label, *status_ffat_value_label;
 extern lv_obj_t *alarm_time_label, *alarm_hours_roller, *alarm_minutes_roller;
 extern lv_obj_t *popup;
 extern lv_obj_t *weather_screen_label, *weather_screen_status_label;

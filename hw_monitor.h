@@ -12,6 +12,8 @@ typedef struct {
     int orientation;
     bool sleeping;
     float freemem;
+    size_t disk_bytes;
+    size_t disk_used_bytes;
 } hw_monitor_t;
 
 extern hw_monitor_t monitor;

@@ -66,14 +66,33 @@ static void save_stored_networks(int n)
         scannedNetworks[scannedCount].ssid[
             sizeof(scannedNetworks[scannedCount].ssid) - 1] = '\0';
         scannedNetworks[i].connected = false;
+        scannedNetworks[i].rssi = WiFi.RSSI(i);
+        scannedNetworks[i].encryption = WiFi.encryptionType(i);
+        scannedNetworks[i].channel = WiFi.channel(i);
         scannedCount++;
     }
     ui_print_wifi_scan();
 }
 
+const char *get_wifi_password_for_ssid(const char *ssid) 
+{
+    DynamicJsonDocument nets(WIFI_BYTES);
+    read_JSON("/wifi.json", nets);
+    Serial.println("Read json successfully");
+    JsonArray networks = nets["networks"].as<JsonArray>();
+    Serial.println("Network read success");
+    serializeJson(nets, Serial);
+    Serial.println();
+    for (JsonObject net : networks) {
+        if (ssid == net["ssid"])
+            return net["password"];
+    }
+    return "";
+}
+
 static void connect_to_saved_wifi()
 {
-    DynamicJsonDocument nets(4096);
+    DynamicJsonDocument nets(WIFI_BYTES);
     read_JSON("/wifi.json", nets);
     Serial.println("Read json successfully");
     JsonArray networks = nets["networks"].as<JsonArray>();
@@ -107,6 +126,7 @@ void start_wifi_scan()
     wifi_scanning = true;
     wifi_connection_attempts++;
 }
+
 static void check_wifi()
 {
     Serial.println("Wifi check");
@@ -213,5 +233,5 @@ void loop()
             update_weather();      
         }
     }
-    delay(250);
+    delay(5);
 }

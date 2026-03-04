@@ -5,6 +5,7 @@
 #include <FS.h>
 #include <FFat.h>
 #include "cache.h"
+#include "watch.h"
 
 Preferences cache;
 
@@ -95,7 +96,7 @@ bool read_JSON(const char *path, DynamicJsonDocument &doc)
 bool save_wifi_to_file(const char *ssid, const char *password) 
 {
     const char *wifi_file = "/wifi.json";
-    DynamicJsonDocument doc(4096);
+    DynamicJsonDocument doc(WIFI_BYTES);
 
     // Read existing
     if (file_exists(wifi_file)) {
@@ -116,25 +117,31 @@ bool save_wifi_to_file(const char *ssid, const char *password)
         networks = doc.createNestedArray("networks");
     }
 
-    // Check duplicate
+    // Try update existing
     for (JsonObject net : networks) {
         if (strcmp(net["ssid"] | "", ssid) == 0) {
-            Serial.println("Network already exists");
-            return false;
+            net["password"] = password;              // update here
+            Serial.println("Network updated");
+            Serial.println("Final JSON:");
+            serializeJsonPretty(doc, Serial);
+            Serial.println();
+            return write_JSON(wifi_file, doc);       // overwrite file with updated doc
         }
     }
 
-    // Add new
+    // Add new (not found)
     JsonObject net = networks.createNestedObject();
     net["ssid"] = ssid;
     net["password"] = password;
 
+    Serial.println("Network added");
     Serial.println("Final JSON:");
     serializeJsonPretty(doc, Serial);
     Serial.println();
 
     return write_JSON(wifi_file, doc);
 }
+
 
 
 void put_string_key_value(const char* key, String value) {
