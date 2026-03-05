@@ -27,6 +27,8 @@ lv_obj_t *weather_screen_label, *weather_screen_status_label;
 lv_obj_t *wifi_scan_container;
 lv_obj_t *wifi_input_box;
 
+lv_obj_t *settings_screen;
+
 int current_screen = CLOCK_SCREEN;
 alarm_cfg_t ui_alarm = {0, 0, false, false, 0};
 char wifi_ssid_selected[33];
@@ -279,13 +281,13 @@ static void wifi_item_event_cb(lv_event_t *e)
     lv_obj_add_state(clicked, LV_STATE_CHECKED);
 }
 
-// Antenna on twatch is bad. -69 is right next to a router
+// Antenna on twatch is made of cheese, so boost these up a bit. -69 is right next to a router
 int rssi_to_bars(int rssi) {
-  if (rssi >= -60) return 5;
-  if (rssi >= -80) return 4;
-  if (rssi >= -90) return 3;
-  if (rssi >= -100) return 2;
-  return 1;
+    if (rssi >= -60) return 5;
+    if (rssi >= -80) return 4;
+    if (rssi >= -90) return 3;
+    if (rssi >= -100) return 2;
+    return 1;
 }
 
 // this crashes sometimes
@@ -306,7 +308,6 @@ void ui_print_wifi_scan() {
             snprintf(temp, sizeof(temp), "%s %s", ssidBuf, LV_SYMBOL_WARNING);
             strncpy(ssidBuf, temp, sizeof(ssidBuf));
         }
-        // RSSI number (always)
         char temp[64];
         Serial.printf("Rssi for %s: %d\n", scannedNetworks[i].ssid, scannedNetworks[i].rssi);
         snprintf(temp, sizeof(temp), "%s %d*", ssidBuf, rssi_to_bars(scannedNetworks[i].rssi));
@@ -378,10 +379,14 @@ void refresh_screen_headers()
     char battery_percent_cacheBuf[8];
     snprintf(battery_percent_cacheBuf, sizeof(battery_percent_cacheBuf), "%d%%", monitor.battery_percent);
     lv_label_set_text(battery_label, battery_percent_cacheBuf);
-    if (monitor.wifi_connected)
-        lv_style_set_text_color(&style_wifi, color_green);
-    else
-        lv_style_set_text_color(&style_wifi, color_red);
+    if (!monitor.wifi_enabled)
+        lv_style_set_text_color(&style_wifi, color_grey);
+    else {
+        if (monitor.wifi_connected)
+            lv_style_set_text_color(&style_wifi, color_green);
+        else
+            lv_style_set_text_color(&style_wifi, color_red);
+    }
     int charge_adjust = 0;
     if (monitor.battery_percent >= 100)
         charge_adjust = -5;
@@ -660,11 +665,74 @@ void init_screens()
     draw_weather_screen();
     draw_wifi_screen();
     draw_screen_headers();
+
+    // Secondary screens (these are not shown in the normal screen loop)
+    secondary_screens[SETTINGS_SCREEN] = lv_obj_create(NULL);
+    for (int i = 0; i < NUM_SECONDARY_SCREENS; i++) {
+        lv_obj_set_style_bg_color(secondary_screens[i], lv_color_black(), LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(secondary_screens[i], LV_OPA_COVER, LV_PART_MAIN);
+    }
+    draw_settings_screen();
+}
+
+void back_button_cb(lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    if (code == LV_EVENT_CLICKED) {
+        switch_to_screen(current_screen);
+    }
+}
+
+void wifi_switch_event_cb(lv_event_t *e)
+{
+    lv_obj_t *sw = lv_event_get_target_obj(e);
+
+    if (lv_event_get_code(e) == LV_EVENT_VALUE_CHANGED) {
+        toggle_wifi();
+    }       
+}
+
+void draw_settings_screen()
+{
+    lv_obj_t *screen = secondary_screens[SETTINGS_SCREEN];
+    lv_obj_t *settings_title_label = ui_add_title_label("Settings", screen);   
+    lv_obj_t *content = ui_add_content_container(CONTENT_HEIGHT_BUTTONS, settings_title_label, screen);
+
+    static int32_t col_dsc[] = {160, 60, LV_GRID_TEMPLATE_LAST};
+    static int32_t row_dsc[] = {20, 20, 20, 20, 20, 20, 20, 20, LV_GRID_TEMPLATE_LAST};
+
+    static grid_row_t rows[] = {
+        {"Toggle Wifi:", NULL},
+        {"Toggle BT:", NULL},
+        {"Toggle GPS:", NULL},
+        {"UTC Offset:", NULL},
+        {"UTC2 Offset:", NULL},
+        {"Longitude:", NULL},
+        {"Latitude:", NULL},
+        {"Timezone:", NULL}
+    };
+    lv_obj_t *grid = ui_create_grid(col_dsc, row_dsc, rows, 8, content);
+
+    lv_obj_t *wifi_switch = lv_switch_create(grid);
+    lv_obj_add_event_cb(wifi_switch, wifi_switch_event_cb, LV_EVENT_ALL, NULL);
+    if (monitor.wifi_enabled)
+        lv_obj_add_state(wifi_switch, LV_STATE_CHECKED);
+    lv_obj_set_grid_cell(wifi_switch, LV_GRID_ALIGN_STRETCH, 1, 1, 
+        LV_GRID_ALIGN_STRETCH, 0, 1);  
+
+    lv_obj_t *btn_container = ui_add_button_row(screen);
+    align_cfg_t btn_align = {0, 0, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_AUTO};
+    size_cfg_t btn_size = {40, 80};
+    lv_obj_t *settings_btn = ui_add_button(NULL, "Back", NULL, &style_default_small, back_button_cb, 
+        &btn_align, &btn_size, btn_container);
 }
 
 void settings_button_cb(lv_event_t *e)
 {
-    
+    lv_event_code_t code = lv_event_get_code(e);
+    if (code == LV_EVENT_CLICKED) {
+        lv_scr_load(secondary_screens[SETTINGS_SCREEN]);
+    }
 }
 
 void draw_status_screen()
@@ -675,93 +743,23 @@ void draw_status_screen()
     static int32_t col_dsc[] = {100, 140, LV_GRID_TEMPLATE_LAST};
     static int32_t row_dsc[] = {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, LV_GRID_TEMPLATE_LAST};
 
-    static align_cfg_t grid_aligns = {0, 0, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_LEFT};
-    /*Create a container with grid*/
-    lv_obj_t *container = lv_obj_create(content);
-    lv_obj_add_style(container, &style_grid, LV_PART_MAIN);
-    lv_obj_set_style_grid_column_dsc_array(container, col_dsc, 0);
-    lv_obj_set_style_grid_row_dsc_array(container, row_dsc, 0);
-    lv_obj_set_size(container, 240, 240);
-    lv_obj_align(container, LV_ALIGN_TOP_LEFT, 0, 0);
-    lv_obj_set_layout(container, LV_LAYOUT_GRID);
-    lv_obj_clear_flag(container, LV_OBJ_FLAG_SCROLLABLE);
-
-    lv_obj_t *status_ssid_title_label = lv_label_create(container);
-    lv_label_set_text(status_ssid_title_label, "SSID:");
-    lv_obj_set_grid_cell(status_ssid_title_label, LV_GRID_ALIGN_STRETCH, 0, 1,
-                             LV_GRID_ALIGN_STRETCH, 0, 1);
-    status_ssid_value_label = lv_label_create(container);
-    lv_obj_set_grid_cell(status_ssid_value_label, LV_GRID_ALIGN_STRETCH, 1, 1,
-                             LV_GRID_ALIGN_STRETCH, 0, 1);
-
-    lv_obj_t *status_local_ip_title_label = lv_label_create(container);
-    lv_label_set_text(status_local_ip_title_label, "Local IP:");
-    lv_obj_set_grid_cell(status_local_ip_title_label, LV_GRID_ALIGN_STRETCH, 0, 1,
-                             LV_GRID_ALIGN_STRETCH, 1, 1);
-    status_local_ip_value_label = lv_label_create(container);
-    lv_obj_set_grid_cell(status_local_ip_value_label, LV_GRID_ALIGN_STRETCH, 1, 1,
-                             LV_GRID_ALIGN_STRETCH, 1, 1);
-
-    lv_obj_t *status_gateway_ip_title_label = lv_label_create(container);
-    lv_label_set_text(status_gateway_ip_title_label, "Gateway IP:");
-    lv_obj_set_grid_cell(status_gateway_ip_title_label, LV_GRID_ALIGN_STRETCH, 0, 1,
-                             LV_GRID_ALIGN_STRETCH, 2, 1);
-    status_gateway_ip_value_label = lv_label_create(container);
-    lv_obj_set_grid_cell(status_gateway_ip_value_label, LV_GRID_ALIGN_STRETCH, 1, 1,
-                             LV_GRID_ALIGN_STRETCH, 2, 1);
-
-    lv_obj_t *status_power_title_label = lv_label_create(container);
-    lv_label_set_text(status_power_title_label, "Battery:");
-    lv_obj_set_grid_cell(status_power_title_label, LV_GRID_ALIGN_STRETCH, 0, 1,
-                             LV_GRID_ALIGN_STRETCH, 3, 1);
-    status_power_value_label = lv_label_create(container);
-    lv_obj_set_grid_cell(status_power_value_label, LV_GRID_ALIGN_STRETCH, 1, 1,
-                             LV_GRID_ALIGN_STRETCH, 3, 1);
-
-    lv_obj_t *status_temp_title_label = lv_label_create(container);
-    lv_label_set_text(status_temp_title_label, "Int. Temp.:");
-    lv_obj_set_grid_cell(status_temp_title_label, LV_GRID_ALIGN_STRETCH, 0, 1,
-                             LV_GRID_ALIGN_STRETCH, 4, 1);
-    status_temp_value_label = lv_label_create(container);
-    lv_obj_set_grid_cell(status_temp_value_label, LV_GRID_ALIGN_STRETCH, 1, 1,
-                             LV_GRID_ALIGN_STRETCH, 4, 1);
-
-    lv_obj_t *status_vbus_title_label = lv_label_create(container);
-    lv_label_set_text(status_vbus_title_label, "Vbus Volt:");
-    lv_obj_set_grid_cell(status_vbus_title_label, LV_GRID_ALIGN_STRETCH, 0, 1,
-                             LV_GRID_ALIGN_STRETCH, 5, 1);
-    status_vbus_value_label = lv_label_create(container);
-    lv_obj_set_grid_cell(status_vbus_value_label, LV_GRID_ALIGN_STRETCH, 1, 1,
-                             LV_GRID_ALIGN_STRETCH, 5, 1);
-
-    lv_obj_t *status_sysvolt_title_label = lv_label_create(container);
-    lv_label_set_text(status_sysvolt_title_label, "Sys Volt:");
-    lv_obj_set_grid_cell(status_sysvolt_title_label, LV_GRID_ALIGN_STRETCH, 0, 1,
-                             LV_GRID_ALIGN_STRETCH, 6, 1);
-    status_sysvolt_value_label = lv_label_create(container);
-    lv_obj_set_grid_cell(status_sysvolt_value_label, LV_GRID_ALIGN_STRETCH, 1, 1,
-                             LV_GRID_ALIGN_STRETCH, 6, 1);
-
-    lv_obj_t *status_mem_title_label = lv_label_create(container);
-    lv_label_set_text(status_mem_title_label, "Free mem.:");
-    lv_obj_set_grid_cell(status_mem_title_label, LV_GRID_ALIGN_STRETCH, 0, 1,
-                             LV_GRID_ALIGN_STRETCH, 7, 1);
-    status_mem_value_label = lv_label_create(container);
-    lv_obj_set_grid_cell(status_mem_value_label, LV_GRID_ALIGN_STRETCH, 1, 1,
-                             LV_GRID_ALIGN_STRETCH, 7, 1);
-
-    lv_obj_t *status_ffat_title_label = lv_label_create(container);
-    lv_label_set_text(status_ffat_title_label, "FFat.:");
-    lv_obj_set_grid_cell(status_ffat_title_label, LV_GRID_ALIGN_STRETCH, 0, 1,
-                             LV_GRID_ALIGN_STRETCH, 8, 1);
-    status_ffat_value_label = lv_label_create(container);
-    lv_obj_set_grid_cell(status_ffat_value_label, LV_GRID_ALIGN_STRETCH, 1, 1,
-                             LV_GRID_ALIGN_STRETCH, 8, 1);
+    static grid_row_t rows[] = {
+        {"SSID:", &status_ssid_value_label},
+        {"Local IP:", &status_local_ip_value_label},
+        {"Gateway IP:", &status_gateway_ip_value_label},
+        {"Battery:", &status_power_value_label},
+        {"Int. Temp.:", &status_temp_value_label},
+        {"Vbus Volt:", &status_vbus_value_label},
+        {"Sys Volt:", &status_sysvolt_value_label},
+        {"Free mem.:", &status_mem_value_label},
+        {"Storage:", &status_ffat_value_label}
+    };
+    lv_obj_t *grid = ui_create_grid(col_dsc, row_dsc, rows, 9, content);
 
     lv_obj_t *btn_container = ui_add_button_row(screen);
     align_cfg_t btn_align = {0, 0, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_AUTO};
     size_cfg_t btn_size = {40, 80};
-    lv_obj_t *settings_btn = ui_add_button(NULL, "Settings", NULL, &style_default_small, settings_button_cb, 
+    lv_obj_t *settings_btn = ui_add_button(NULL, LV_SYMBOL_SETTINGS, NULL, &style_default_small, settings_button_cb, 
         &btn_align, &btn_size, btn_container);
 }
 
@@ -798,7 +796,7 @@ lv_obj_t *show_input_box()
     //lv_msgbox_add_text(mbox, "Password:");                     
     lv_obj_set_width(mbox, 220);
     /* Content area of msgbox */
-    lv_msgbox_add_text_fmt(mbox, "%s", wifi_ssid_selected);
+    lv_msgbox_add_text(mbox, wifi_ssid_selected);
     lv_obj_t *content = lv_msgbox_get_content(mbox);                  
     lv_obj_add_style(mbox, &style_container, LV_PART_MAIN);
     lv_obj_add_style(mbox, &style_default_small, LV_PART_MAIN);
@@ -858,7 +856,10 @@ void draw_wifi_screen()
     lv_obj_t *btn_container = ui_add_button_row(screen);
     align_cfg_t btn_align = {0, 0, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_AUTO};
     size_cfg_t btn_size = {40, 80};
-    lv_obj_t *scan_btn = ui_add_button(NULL, "Scan", NULL, &style_default_small, wifi_scan_btn_cb, 
+    lv_obj_t *settings_btn = ui_add_button(NULL, LV_SYMBOL_SETTINGS, NULL, &style_default_small, wifi_scan_btn_cb, 
+        &btn_align, &btn_size, btn_container);
+    btn_align.align = LV_ALIGN_TOP_MID;
+    lv_obj_t *scan_btn = ui_add_button(NULL, LV_SYMBOL_REFRESH, NULL, &style_default_small, wifi_scan_btn_cb, 
         &btn_align, &btn_size, btn_container);
     btn_align.align = LV_ALIGN_TOP_RIGHT;
     lv_obj_t *connect_btn = ui_add_button(NULL, "Connect", NULL, &style_default_small, wifi_connect_button_cb, 

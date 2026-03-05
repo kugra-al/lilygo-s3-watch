@@ -36,6 +36,18 @@ typedef struct {
 wifi_t *scannedNetworks = nullptr;
 size_t  scannedCount    = 0;
 
+void toggle_wifi()
+{
+    if (monitor.wifi_enabled) {
+        WiFi.disconnect(true);
+        WiFi.mode(WIFI_OFF);
+        wifi_enabled = false;
+    } else {
+        start_wifi_scan();
+        wifi_enabled = true;
+    }
+}
+
 bool ssid_exists(const char *ssid) {
     for (size_t i = 0; i < scannedCount; ++i) {
         if (strcmp(scannedNetworks[i].ssid, ssid) == 0) {
@@ -202,7 +214,7 @@ void loop()
             update_time();
             if (current_screen == CLOCK_SCREEN) // Move to check if there's no valid date, or midnight
                 update_date();
-            if (wifi_scanning) {
+            if (wifi_scanning && monitor.wifi_enabled) {
                 int result = WiFi.scanComplete();
                 Serial.printf("Scan result %d\n", result);
                 ui_update_wifi(result);
@@ -219,7 +231,7 @@ void loop()
             refresh_screen_headers();
             ui_refresh_sensor_labels();
         }
-        if (current_millis - last_wifi_check >= ONE_MINUTE) {
+        if (current_millis - last_wifi_check >= ONE_MINUTE && monitor.wifi_enabled) {
             last_wifi_check = current_millis;
             check_wifi();
         }

@@ -222,13 +222,31 @@ lv_obj_t *init_popup(char *label_text, char *btn_text, void (*callback)(lv_event
     return popup;
 }
 
-lv_obj_t *ui_keyboard_show()
+lv_obj_t *ui_create_grid(const int32_t *col_dsc, const int32_t *row_dsc, grid_row_t *rows, int num_rows, lv_obj_t *screen)
 {
-    lv_obj_t *keyboard = lv_keyboard_create(screens[current_screen]);
-    return keyboard;
-}
+    lv_obj_t *grid = lv_obj_create(screen);
+    lv_obj_add_style(grid, &style_grid, LV_PART_MAIN);
+    lv_obj_set_style_grid_column_dsc_array(grid, col_dsc, 0);
+    lv_obj_set_style_grid_row_dsc_array(grid, row_dsc, 0);
+    lv_obj_set_size(grid, 240, 240);
+    lv_obj_align(grid, LV_ALIGN_TOP_LEFT, 0, 0);
+    lv_obj_set_layout(grid, LV_LAYOUT_GRID);
+    lv_obj_clear_flag(grid, LV_OBJ_FLAG_SCROLLABLE);
 
-lv_obj_t *ui_keyboard_hide()
-{
-    
+    Serial.printf("Number of grid rows: %d", num_rows);
+    for(int i = 0; i < num_rows; i++) {
+        lv_obj_t *label = lv_label_create(grid);
+        lv_label_set_text(label, rows[i].title);
+        Serial.printf("Writing title: %s", rows[i].title);
+        lv_obj_set_grid_cell(label, LV_GRID_ALIGN_STRETCH, 0, 1,
+            LV_GRID_ALIGN_STRETCH, i, 1);
+        if (rows[i].value) {
+            lv_obj_t *value_label = lv_label_create(grid);
+            *rows[i].value = value_label;
+            lv_obj_set_grid_cell(value_label, LV_GRID_ALIGN_STRETCH, 1, 1,
+                LV_GRID_ALIGN_STRETCH, i, 1);
+        }
+    }
+
+    return grid;
 }

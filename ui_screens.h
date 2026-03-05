@@ -22,6 +22,8 @@ typedef struct {
 extern alarm_cfg_t ui_alarm;
 static lv_obj_t *screens[5];
 #define NUM_SCREENS (sizeof(screens) / sizeof(screens[0]))
+static lv_obj_t *secondary_screens[1];
+#define NUM_SECONDARY_SCREENS (sizeof(secondary_screens) / sizeof(secondary_screens[0]))
 
 #define CLOCK_SCREEN 0
 #define STATUS_SCREEN 1
@@ -29,12 +31,15 @@ static lv_obj_t *screens[5];
 #define ALARM_SCREEN 3
 #define WIFI_SCREEN 4
 
+// Secondary screens
+#define SETTINGS_SCREEN 0
+
 void draw_clock_screen();
 void draw_status_screen();
 void draw_alarm_screen();
 void draw_weather_screen();
 void draw_wifi_screen();
-void draw_numpad();
+void draw_settings_screen();
 void ui_refresh_sensor_labels();
 void ui_update_wifi(int result);
 void ui_print_wifi_scan();

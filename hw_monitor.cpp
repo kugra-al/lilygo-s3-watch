@@ -9,6 +9,9 @@
 hw_monitor_t monitor;
 int last_event = 0;
 bool is_sleeping = false;
+bool wifi_enabled = true;
+bool bluetooth_enabled = false;
+bool gps_enabled = false;
 
 void hw_update_monitor()
 {
@@ -27,6 +30,9 @@ void hw_update_monitor()
     monitor.freemem = ESP.getFreeHeap();
     monitor.disk_bytes = FFat.totalBytes();
     monitor.disk_used_bytes = FFat.usedBytes();
+    monitor.wifi_enabled = wifi_enabled;
+    monitor.bluetooth_enabled = bluetooth_enabled;
+    monitor.gps_enabled = gps_enabled;
 }
 
 // Here we just dim the screen and block some loops. lightSleep and sleep both have some problems with what 

@@ -8,6 +8,11 @@ typedef struct {
     int height, width;
 } size_cfg_t;
 
+typedef struct {
+    const char *title;
+    lv_obj_t **value; 
+} grid_row_t;
+
 #define LV_COLOR_TRANSP  lv_color_hex(0x00ff00) 
 #define CONTENT_HEIGHT 160
 #define CONTENT_HEIGHT_BUTTONS 140
@@ -46,3 +51,4 @@ lv_obj_t *ui_add_content_container(int height, lv_obj_t *title, lv_obj_t *screen
 lv_obj_t *ui_add_button_row(lv_obj_t *screen);
 lv_obj_t *init_popup(char *label_text, char *btn_text, void (*callback)(lv_event_t *));
 lv_obj_t *ui_keyboard_show();
+lv_obj_t *ui_create_grid(const int32_t *col_dsc, const int32_t *row_dsc, grid_row_t *rows, int num_rows, lv_obj_t *screen);
