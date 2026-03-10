@@ -15,6 +15,7 @@ lv_style_t style_roller;
 lv_style_t style_roller_selected;
 lv_style_t style_charge;
 lv_style_t style_wifi;
+lv_style_t style_bluetooth;
 lv_style_t style_weather;
 lv_style_t style_grid;
 lv_style_t style_container;
@@ -99,6 +100,7 @@ void init_styles()
         { &style_roller_selected, &lv_font_montserrat_18, lv_color_black(), color_default, lv_color_black(), 1},
         { &style_charge, &lv_font_montserrat_16, color_yellow, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
         { &style_wifi, &lv_font_montserrat_16, color_red, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
+        { &style_bluetooth, &lv_font_montserrat_16, color_red, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
         { &style_weather, &weather_icons, color_default, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
         { &style_title, &lv_font_montserrat_24, color_default, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL}
     };
@@ -208,6 +210,28 @@ lv_obj_t *ui_add_button_row(lv_obj_t *screen)
     return container;
 }
 
+lv_obj_t *ui_show_input_box(const char *title, const char *text_content, lv_obj_t *screen, lv_obj_t **target_textarea)
+{
+    /* Modal message box */
+    lv_obj_t *mbox = lv_msgbox_create(screen);                                            
+    //lv_msgbox_add_text(mbox, "Password:");                     
+    lv_obj_set_width(mbox, 220);
+    /* Content area of msgbox */
+    lv_msgbox_add_text(mbox, title);
+    lv_obj_t *content = lv_msgbox_get_content(mbox);                  
+    lv_obj_add_style(mbox, &style_container, LV_PART_MAIN);
+    lv_obj_add_style(mbox, &style_default_small, LV_PART_MAIN);
+    /* Text area inside msgbox */
+    lv_obj_t *textarea = lv_textarea_create(content);   
+    lv_obj_add_style(textarea, &style_container, LV_PART_MAIN);                              
+    lv_textarea_set_one_line(textarea, true);                               
+    lv_obj_set_width(textarea, lv_pct(100));   
+    lv_textarea_set_text(textarea, text_content);      
+    *target_textarea = textarea;
+    lv_obj_align(mbox, LV_ALIGN_TOP_MID, 0, 40);
+    return mbox;
+}
+
 lv_obj_t *init_popup(char *label_text, char *btn_text, void (*callback)(lv_event_t *))
 {
     lv_obj_clear_flag(popup, LV_OBJ_FLAG_HIDDEN);
@@ -233,11 +257,9 @@ lv_obj_t *ui_create_grid(const int32_t *col_dsc, const int32_t *row_dsc, grid_ro
     lv_obj_set_layout(grid, LV_LAYOUT_GRID);
     lv_obj_clear_flag(grid, LV_OBJ_FLAG_SCROLLABLE);
 
-    Serial.printf("Number of grid rows: %d", num_rows);
     for(int i = 0; i < num_rows; i++) {
         lv_obj_t *label = lv_label_create(grid);
         lv_label_set_text(label, rows[i].title);
-        Serial.printf("Writing title: %s", rows[i].title);
         lv_obj_set_grid_cell(label, LV_GRID_ALIGN_STRETCH, 0, 1,
             LV_GRID_ALIGN_STRETCH, i, 1);
         if (rows[i].value) {

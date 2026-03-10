@@ -10,6 +10,8 @@ extern lv_obj_t *popup;
 extern lv_obj_t *weather_screen_label, *weather_screen_status_label;
 extern lv_obj_t *wifi_scan_container;
 extern int current_screen;
+extern int utc_offset_value, utc2_offset_value;
+extern float longitude_value, latitude_value;
 
 typedef struct {
     int hour;
@@ -34,6 +36,11 @@ static lv_obj_t *secondary_screens[1];
 // Secondary screens
 #define SETTINGS_SCREEN 0
 
+#define DEFAULT_UTC_OFFSET 0
+#define DEFAULT_UTC2_OFFSET -1
+#define DEFAULT_LONGITUDE_VALUE -0.1275
+#define DEFAULT_LATITUDE_VALUE 51.5033
+
 void draw_clock_screen();
 void draw_status_screen();
 void draw_alarm_screen();
@@ -53,3 +60,4 @@ void update_battery_percent();
 void alarm_alert();
 void alarm_start();
 void alarm_stop();
+char *get_cache_key_from_title(const char *title);

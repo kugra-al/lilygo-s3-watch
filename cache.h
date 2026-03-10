@@ -10,6 +10,8 @@ void put_bool_key_value(const char *key, bool value);
 bool get_bool_key_value(const char *key, bool default_value);
 void put_int_key_value(const char *key, int value);
 int get_int_key_value(const char *key, int default_value);
+void put_float_key_value(const char *key, float value);
+float get_float_key_value(const char *key, float defaultVal);
 void mount_file_system();
 String read_file(const char *path);
 bool write_file(const char *path, const char *content);

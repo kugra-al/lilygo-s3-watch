@@ -186,3 +186,18 @@ int get_int_key_value(const char *key, int defaultVal = NULL)
     cache.end();
     return val;
 }
+
+void put_float_key_value(const char *key, float value)
+{
+    cache.begin(key, false);
+    cache.putFloat(key, value);
+    cache.end();
+}
+
+float get_float_key_value(const char *key, float defaultVal = NULL)
+{
+    cache.begin(key, true);
+    float val = cache.getFloat(key, defaultVal);
+    cache.end();
+    return val;
+}
