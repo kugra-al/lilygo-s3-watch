@@ -142,16 +142,14 @@ bool save_wifi_to_file(const char *ssid, const char *password)
     return write_JSON(wifi_file, doc);
 }
 
-
-
 void put_string_key_value(const char* key, String value) {
-    cache.begin(key, false);
+    cache.begin("settings", false);
     cache.putString(key, value);  
     cache.end();
 }
 
 String get_string_key_value(const char* key, String defaultVal = "") {
-    cache.begin(key, true);
+    cache.begin("settings", true);
     String val = cache.getString(key, defaultVal);
     cache.end();
     return val;
@@ -159,14 +157,14 @@ String get_string_key_value(const char* key, String defaultVal = "") {
 
 void put_bool_key_value(const char *key, bool value)
 {
-    cache.begin(key, false);
+    cache.begin("settings", false);
     cache.putBool(key, value);
     cache.end();
 }
 
 bool get_bool_key_value(const char *key, bool defaultVal = false)
 {
-    cache.begin(key, true);
+    cache.begin("settings", true);
     bool val = cache.getBool(key, defaultVal);
     cache.end();
     return val;
@@ -174,14 +172,14 @@ bool get_bool_key_value(const char *key, bool defaultVal = false)
 
 void put_int_key_value(const char *key, int value)
 {
-    cache.begin(key, false);
+    cache.begin("settings", false);
     cache.putInt(key, value);
     cache.end();
 }
 
-int get_int_key_value(const char *key, int defaultVal = NULL)
+int get_int_key_value(const char *key, int defaultVal = 0)
 {
-    cache.begin(key, true);
+    cache.begin("settings", true);
     int val = cache.getInt(key, defaultVal);
     cache.end();
     return val;
@@ -189,14 +187,14 @@ int get_int_key_value(const char *key, int defaultVal = NULL)
 
 void put_float_key_value(const char *key, float value)
 {
-    cache.begin(key, false);
+    cache.begin("settings", false);
     cache.putFloat(key, value);
     cache.end();
 }
 
-float get_float_key_value(const char *key, float defaultVal = NULL)
+float get_float_key_value(const char *key, float defaultVal = 0)
 {
-    cache.begin(key, true);
+    cache.begin("settings", true);
     float val = cache.getFloat(key, defaultVal);
     cache.end();
     return val;

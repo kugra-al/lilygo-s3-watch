@@ -13,6 +13,7 @@
 #include <WiFi.h>
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
+#include "nvs_flash.h"
 #include "time.h"
 #include "config.h"
 #include <Preferences.h>
@@ -168,12 +169,19 @@ static void check_wifi()
     lv_obj_add_style(wifi_label, &style_wifi, LV_PART_MAIN);
 }
 
+void nvs_full_reset() {
+    Serial.println("Full NVS reset...");
+    nvs_flash_erase();
+    //esp_restart();
+}
+
 void setup()
 {
     Serial.begin(115200);
     instance.begin();
     beginLvglHelper(instance);
     instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
+    //nvs_full_reset();
     instance.onEvent([](DeviceEvent_t event, void *params, void * user_data) {
         if (instance.getPMUEventType(params) == PMU_EVENT_KEY_CLICKED) {
             last_event = millis();
@@ -196,10 +204,10 @@ void setup()
     init_styles();
     init_screens();
     switch_to_screen(CLOCK_SCREEN);
-    utc_offset_value = get_int_key_value("utc_offset_value", DEFAULT_UTC_OFFSET);
-    utc2_offset_value = get_int_key_value("utc2_offset_value", DEFAULT_UTC2_OFFSET);
-    longitude_value = get_float_key_value("longitude_value", DEFAULT_LONGITUDE_VALUE);
-    latitude_value = get_float_key_value("latitude_value", DEFAULT_LATITUDE_VALUE);
+    utc_offset_value = get_int_key_value("utc_offset", DEFAULT_UTC_OFFSET);
+    utc2_offset_value = get_int_key_value("utc2_offset", DEFAULT_UTC2_OFFSET);
+    longitude_value = get_float_key_value("longitude", DEFAULT_LONGITUDE_VALUE);
+    latitude_value = get_float_key_value("latitude", DEFAULT_LATITUDE_VALUE);
     check_wifi();
     ui_alarm.hour = get_int_key_value("ui_alarm_hour", 0);
     ui_alarm.minute = get_int_key_value("ui_alarm_min", 0);

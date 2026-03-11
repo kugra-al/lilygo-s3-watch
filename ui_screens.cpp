@@ -192,11 +192,12 @@ void update_weather()
     char longitude_str[16];
     sprintf(longitude_str, "%.4f", longitude_value);
     char latitude_str[16];
-    sprintf(latitude_str, "%.4f", longitude_value);
+    sprintf(latitude_str, "%.4f", latitude_value);
     String url = String("https://api.open-meteo.com/v1/forecast?latitude=")+latitude_str+
         "&longitude="+longitude_str+"&current_weather=true&daily=sunrise,sunset,weather_code,temperature_2m_max,"+
         "temperature_2m_min&timezone=Europe/Vilnius&forecast_days=14";  
-    Serial.printf("Fetching url: %s\n", url);
+    Serial.println("Fetching url:");
+    Serial.println(url);
     HTTPClient http;
     http.begin(url);
     int code = http.GET();
@@ -723,14 +724,18 @@ void settings_kb_event_cb(lv_event_t *e)
         Serial.println(settings_value);
         Serial.println(lv_textarea_get_text(original_textbox));
         //Serial.println(original_value);
-        if (mbox_data->default_int_ptr == NULL) {
+        if (mbox_data->default_float_ptr != NULL) {
             float settings_float = strtof(settings_value, NULL);
-            mbox_data->default_float_ptr = &settings_float;
+            *mbox_data->default_float_ptr = settings_float;
             put_float_key_value(cache_key, settings_float);
-        } else if (mbox_data->default_float_ptr == NULL) {
+
+        } else if (mbox_data->default_int_ptr != NULL) {
             int settings_int = strtol(settings_value, NULL, 10);
-            mbox_data->default_int_ptr = &settings_int;
+            *mbox_data->default_int_ptr = settings_int;
             put_int_key_value(cache_key, settings_int);
+
+            Serial.printf("Writing %d to %s\n", settings_int, cache_key);
+            Serial.printf("Contents of cache: %d\n", get_int_key_value(cache_key, -99));
         }
         lv_textarea_set_text(original_textbox, settings_value);
         // Need to get value from mbox. Save to cache. Update whatever is in mem, update value of settings container
@@ -796,12 +801,13 @@ void draw_settings_screen()
     lv_obj_set_width(settings_utc_textarea, lv_pct(100));  
     lv_obj_set_grid_cell(settings_utc_textarea, LV_GRID_ALIGN_STRETCH, 1, 1, 
         LV_GRID_ALIGN_STRETCH, 3, 1);  
-    lv_textarea_set_text(settings_utc_textarea, String(get_int_key_value("utc_offset_value", DEFAULT_UTC_OFFSET)).c_str());
+    lv_textarea_set_text(settings_utc_textarea, String(get_int_key_value("utc_offset", DEFAULT_UTC_OFFSET)).c_str());
     lv_obj_add_event_cb(settings_utc_textarea, settings_input_click_cb, LV_EVENT_ALL, NULL);
     msgbox_data_t *utc_data = (msgbox_data_t *)malloc(sizeof(msgbox_data_t));
     utc_data->parent_textarea = settings_utc_textarea;
     utc_data->title = utc_offset;
-    utc_data->cache_key = "utc_offset_value";
+    utc_data->cache_key = "utc_offset";
+    utc_data->default_float_ptr = NULL;
     utc_data->default_int_ptr = &utc_offset_value;
     lv_obj_set_user_data(settings_utc_textarea, utc_data);
 
@@ -811,12 +817,13 @@ void draw_settings_screen()
     lv_obj_set_width(settings_utc2_textarea, lv_pct(100));  
     lv_obj_set_grid_cell(settings_utc2_textarea, LV_GRID_ALIGN_STRETCH, 1, 1, 
         LV_GRID_ALIGN_STRETCH, 4, 1);  
-    lv_textarea_set_text(settings_utc2_textarea, String(get_int_key_value("utc2_offset_value", DEFAULT_UTC2_OFFSET)).c_str());
+    lv_textarea_set_text(settings_utc2_textarea, String(get_int_key_value("utc2_offset", DEFAULT_UTC2_OFFSET)).c_str());
     lv_obj_add_event_cb(settings_utc2_textarea, settings_input_click_cb, LV_EVENT_ALL, NULL);
     msgbox_data_t *utc2_data = (msgbox_data_t *)malloc(sizeof(msgbox_data_t));
     utc2_data->parent_textarea = settings_utc2_textarea;
     utc2_data->title = utc2_offset;
-    utc2_data->cache_key = "utc2_offset_value";
+    utc2_data->cache_key = "utc2_offset";
+    utc2_data->default_float_ptr = NULL;
     utc2_data->default_int_ptr = &utc2_offset_value;
     lv_obj_set_user_data(settings_utc2_textarea, utc2_data);
 
@@ -826,7 +833,7 @@ void draw_settings_screen()
     lv_obj_set_width(settings_longitude_textarea, lv_pct(100));  
     lv_obj_set_grid_cell(settings_longitude_textarea, LV_GRID_ALIGN_STRETCH, 1, 1, 
         LV_GRID_ALIGN_STRETCH, 5, 1);
-    float longitude_value = get_float_key_value("longitude_value", DEFAULT_LONGITUDE_VALUE);
+    float longitude_value = get_float_key_value("longitude", DEFAULT_LONGITUDE_VALUE);
     char longitude_str[16];
     sprintf(longitude_str, "%.4f", longitude_value);
     lv_textarea_set_text(settings_longitude_textarea, longitude_str);
@@ -834,7 +841,8 @@ void draw_settings_screen()
     msgbox_data_t *longitude_data = (msgbox_data_t *)malloc(sizeof(msgbox_data_t));
     longitude_data->parent_textarea = settings_longitude_textarea;
     longitude_data->title = longitude;
-    longitude_data->cache_key = "longitude_value";
+    longitude_data->cache_key = "longitude";
+    longitude_data->default_int_ptr = NULL;
     longitude_data->default_float_ptr = &longitude_value;
     lv_obj_set_user_data(settings_longitude_textarea, longitude_data);
 
@@ -844,7 +852,7 @@ void draw_settings_screen()
     lv_obj_set_width(settings_latitude_textarea, lv_pct(100));  
     lv_obj_set_grid_cell(settings_latitude_textarea, LV_GRID_ALIGN_STRETCH, 1, 1, 
         LV_GRID_ALIGN_STRETCH, 6, 1);
-    float latitude_value = get_float_key_value("latitude_value", DEFAULT_LATITUDE_VALUE);
+    float latitude_value = get_float_key_value("latitude", DEFAULT_LATITUDE_VALUE);
     char latitude_str[16];
     sprintf(latitude_str, "%.4f", latitude_value);
     lv_textarea_set_text(settings_latitude_textarea, latitude_str);  
@@ -852,7 +860,8 @@ void draw_settings_screen()
     msgbox_data_t *latitude_data = (msgbox_data_t *)malloc(sizeof(msgbox_data_t));
     latitude_data->parent_textarea = settings_latitude_textarea;
     latitude_data->title = latitude;
-    latitude_data->cache_key = "latitude_value";
+    latitude_data->cache_key = "latitude";
+    latitude_data->default_int_ptr = NULL;
     latitude_data->default_float_ptr = &latitude_value;
     lv_obj_set_user_data(settings_latitude_textarea, latitude_data);
 
