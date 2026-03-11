@@ -25,7 +25,7 @@ void hw_update_monitor()
     monitor.ssid = WiFi.SSID().c_str();
     monitor.local_ip = WiFi.localIP().toString().c_str();
     monitor.gateway_ip = WiFi.gatewayIP().toString().c_str();
-    monitor.orientation = instance.sensor.direction();
+  //  monitor.orientation = instance.sensor.direction();
     monitor.sleeping = is_sleeping;
     monitor.freemem = ESP.getFreeHeap();
     monitor.disk_bytes = FFat.totalBytes();

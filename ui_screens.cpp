@@ -30,8 +30,6 @@ lv_obj_t *settings_utc_textarea, *settings_utc2_textarea, *settings_longitude_te
 lv_obj_t *settings_keyboard;
 lv_obj_t *settings_mbox;
 lv_obj_t *settings_textarea = NULL;
-// Is this still used?
-lv_obj_t *settings_screen;
 
 int utc_offset_value, utc2_offset_value;
 float longitude_value, latitude_value;
@@ -120,7 +118,7 @@ void update_time()
         timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
         
     time_t now = mktime(&timeinfo);
-    time_t time2 = now + (TIME_2_OFFSET * 3600);
+    time_t time2 = now + (utc2_offset_value * 3600);
     struct tm time2info;
     localtime_r(&time2, &time2info);
     char time_2_cacheBuf[10];
@@ -191,9 +189,14 @@ char *get_weather_icon(int code)
 void update_weather()
 {
     Serial.println("Attempting to fetch weather");
-    String url = String("https://api.open-meteo.com/v1/forecast?latitude=")+LATITUDE+
-        "&longitude="+LONGITUDE+"&current_weather=true&daily=sunrise,sunset,weather_code,temperature_2m_max,"+
+    char longitude_str[16];
+    sprintf(longitude_str, "%.4f", longitude_value);
+    char latitude_str[16];
+    sprintf(latitude_str, "%.4f", longitude_value);
+    String url = String("https://api.open-meteo.com/v1/forecast?latitude=")+latitude_str+
+        "&longitude="+longitude_str+"&current_weather=true&daily=sunrise,sunset,weather_code,temperature_2m_max,"+
         "temperature_2m_min&timezone=Europe/Vilnius&forecast_days=14";  
+    Serial.printf("Fetching url: %s\n", url);
     HTTPClient http;
     http.begin(url);
     int code = http.GET();
@@ -711,13 +714,25 @@ void settings_kb_event_cb(lv_event_t *e)
     }
 
     if(code == LV_EVENT_READY) { 
-        const char *cache_key = (const char*)lv_obj_get_user_data(kb);
         const char *settings_value = lv_textarea_get_text(settings_textarea);
         lv_obj_t *original_textbox = (lv_obj_t *)lv_obj_get_user_data(settings_mbox);
+        msgbox_data_t *mbox_data = (msgbox_data_t *)lv_obj_get_user_data(original_textbox);
+        const char *cache_key = (const char*)mbox_data->cache_key;
+        //lv_obj_t *original_textbox = (lv_obj_t *)mbox_data.parent_textarea;
         Serial.println(cache_key);
         Serial.println(settings_value);
+        Serial.println(lv_textarea_get_text(original_textbox));
         //Serial.println(original_value);
-        
+        if (mbox_data->default_int_ptr == NULL) {
+            float settings_float = strtof(settings_value, NULL);
+            mbox_data->default_float_ptr = &settings_float;
+            put_float_key_value(cache_key, settings_float);
+        } else if (mbox_data->default_float_ptr == NULL) {
+            int settings_int = strtol(settings_value, NULL, 10);
+            mbox_data->default_int_ptr = &settings_int;
+            put_int_key_value(cache_key, settings_int);
+        }
+        lv_textarea_set_text(original_textbox, settings_value);
         // Need to get value from mbox. Save to cache. Update whatever is in mem, update value of settings container
         // Delete doesn't delete
        // lv_obj_delete(settings_mbox);
@@ -733,29 +748,18 @@ static void settings_input_click_cb(lv_event_t * e)
     lv_obj_t *target_input = lv_event_get_target_obj(e);
 
     if (code == LV_EVENT_FOCUSED || code == LV_EVENT_CLICKED) {
-        const char *title_text = (const char*)lv_obj_get_user_data(target_input);
+        msgbox_data_t *mbox_data = (msgbox_data_t *)lv_obj_get_user_data(target_input);
+        const char *title_text = (const char*)mbox_data->title;
         const char *default_text = lv_textarea_get_text(target_input);
         settings_mbox = ui_show_input_box(title_text, default_text, secondary_screens[SETTINGS_SCREEN], &settings_textarea);
+
         lv_obj_set_user_data(settings_mbox, target_input);
         lv_keyboard_set_textarea(settings_keyboard, settings_textarea);
-        lv_obj_set_user_data(settings_keyboard, get_cache_key_from_title((const char*)lv_obj_get_user_data(target_input)));
         lv_obj_clear_flag(settings_keyboard, LV_OBJ_FLAG_HIDDEN);
     } else if (code == LV_EVENT_DEFOCUSED) {
         lv_obj_add_flag(settings_keyboard, LV_OBJ_FLAG_HIDDEN);
         lv_obj_delete(settings_mbox);
     }
-}
-
-char *get_cache_key_from_title(const char *title)
-{
-    static char key[64];  // Fixed buffer, safe for single-threaded
-    strncpy(key, title, sizeof(key) - 1);
-    key[sizeof(key) - 1] = '\0';  // Ensure null termination
-    
-    for(int i = 0; key[i]; i++) {
-        key[i] = (key[i] == ' ') ? '_' : tolower(key[i]);
-    }
-    return key;
 }
 
 void draw_settings_screen()
@@ -792,9 +796,14 @@ void draw_settings_screen()
     lv_obj_set_width(settings_utc_textarea, lv_pct(100));  
     lv_obj_set_grid_cell(settings_utc_textarea, LV_GRID_ALIGN_STRETCH, 1, 1, 
         LV_GRID_ALIGN_STRETCH, 3, 1);  
-    lv_textarea_set_text(settings_utc_textarea, String(get_int_key_value(get_cache_key_from_title(utc_offset), DEFAULT_UTC_OFFSET)).c_str());
+    lv_textarea_set_text(settings_utc_textarea, String(get_int_key_value("utc_offset_value", DEFAULT_UTC_OFFSET)).c_str());
     lv_obj_add_event_cb(settings_utc_textarea, settings_input_click_cb, LV_EVENT_ALL, NULL);
-    lv_obj_set_user_data(settings_utc_textarea, (void*)utc_offset);
+    msgbox_data_t *utc_data = (msgbox_data_t *)malloc(sizeof(msgbox_data_t));
+    utc_data->parent_textarea = settings_utc_textarea;
+    utc_data->title = utc_offset;
+    utc_data->cache_key = "utc_offset_value";
+    utc_data->default_int_ptr = &utc_offset_value;
+    lv_obj_set_user_data(settings_utc_textarea, utc_data);
 
     settings_utc2_textarea = lv_textarea_create(grid);   
     lv_obj_add_style(settings_utc2_textarea, &style_container, LV_PART_MAIN);                              
@@ -802,9 +811,14 @@ void draw_settings_screen()
     lv_obj_set_width(settings_utc2_textarea, lv_pct(100));  
     lv_obj_set_grid_cell(settings_utc2_textarea, LV_GRID_ALIGN_STRETCH, 1, 1, 
         LV_GRID_ALIGN_STRETCH, 4, 1);  
-    lv_textarea_set_text(settings_utc2_textarea, String(get_int_key_value(get_cache_key_from_title(utc2_offset), DEFAULT_UTC2_OFFSET)).c_str());
+    lv_textarea_set_text(settings_utc2_textarea, String(get_int_key_value("utc2_offset_value", DEFAULT_UTC2_OFFSET)).c_str());
     lv_obj_add_event_cb(settings_utc2_textarea, settings_input_click_cb, LV_EVENT_ALL, NULL);
-    lv_obj_set_user_data(settings_utc2_textarea, (void*)utc2_offset);
+    msgbox_data_t *utc2_data = (msgbox_data_t *)malloc(sizeof(msgbox_data_t));
+    utc2_data->parent_textarea = settings_utc2_textarea;
+    utc2_data->title = utc2_offset;
+    utc2_data->cache_key = "utc2_offset_value";
+    utc2_data->default_int_ptr = &utc2_offset_value;
+    lv_obj_set_user_data(settings_utc2_textarea, utc2_data);
 
     settings_longitude_textarea = lv_textarea_create(grid);   
     lv_obj_add_style(settings_longitude_textarea, &style_container, LV_PART_MAIN);                              
@@ -812,12 +826,17 @@ void draw_settings_screen()
     lv_obj_set_width(settings_longitude_textarea, lv_pct(100));  
     lv_obj_set_grid_cell(settings_longitude_textarea, LV_GRID_ALIGN_STRETCH, 1, 1, 
         LV_GRID_ALIGN_STRETCH, 5, 1);
-    float longitude_value = get_float_key_value(get_cache_key_from_title(longitude), DEFAULT_LONGITUDE_VALUE);
+    float longitude_value = get_float_key_value("longitude_value", DEFAULT_LONGITUDE_VALUE);
     char longitude_str[16];
     sprintf(longitude_str, "%.4f", longitude_value);
     lv_textarea_set_text(settings_longitude_textarea, longitude_str);
     lv_obj_add_event_cb(settings_longitude_textarea, settings_input_click_cb, LV_EVENT_ALL, NULL);
-    lv_obj_set_user_data(settings_longitude_textarea, (void*)longitude);
+    msgbox_data_t *longitude_data = (msgbox_data_t *)malloc(sizeof(msgbox_data_t));
+    longitude_data->parent_textarea = settings_longitude_textarea;
+    longitude_data->title = longitude;
+    longitude_data->cache_key = "longitude_value";
+    longitude_data->default_float_ptr = &longitude_value;
+    lv_obj_set_user_data(settings_longitude_textarea, longitude_data);
 
     settings_latitude_textarea = lv_textarea_create(grid);   
     lv_obj_add_style(settings_latitude_textarea , &style_container, LV_PART_MAIN);                              
@@ -825,12 +844,17 @@ void draw_settings_screen()
     lv_obj_set_width(settings_latitude_textarea, lv_pct(100));  
     lv_obj_set_grid_cell(settings_latitude_textarea, LV_GRID_ALIGN_STRETCH, 1, 1, 
         LV_GRID_ALIGN_STRETCH, 6, 1);
-    float latitude_value = get_float_key_value(get_cache_key_from_title(latitude), DEFAULT_LATITUDE_VALUE);
+    float latitude_value = get_float_key_value("latitude_value", DEFAULT_LATITUDE_VALUE);
     char latitude_str[16];
     sprintf(latitude_str, "%.4f", latitude_value);
     lv_textarea_set_text(settings_latitude_textarea, latitude_str);  
     lv_obj_add_event_cb(settings_latitude_textarea, settings_input_click_cb, LV_EVENT_ALL, NULL);
-    lv_obj_set_user_data(settings_latitude_textarea, (void*)latitude);
+    msgbox_data_t *latitude_data = (msgbox_data_t *)malloc(sizeof(msgbox_data_t));
+    latitude_data->parent_textarea = settings_latitude_textarea;
+    latitude_data->title = latitude;
+    latitude_data->cache_key = "latitude_value";
+    latitude_data->default_float_ptr = &latitude_value;
+    lv_obj_set_user_data(settings_latitude_textarea, latitude_data);
 
     lv_obj_t *btn_container = ui_add_button_row(screen);
     align_cfg_t btn_align = {0, 0, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_AUTO};

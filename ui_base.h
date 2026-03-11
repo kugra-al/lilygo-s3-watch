@@ -13,6 +13,14 @@ typedef struct {
     lv_obj_t **value; 
 } grid_row_t;
 
+typedef struct {
+    lv_obj_t *parent_textarea;
+    const char *title;
+    const char *cache_key;
+    int *default_int_ptr = NULL;
+    float *default_float_ptr = NULL;
+} msgbox_data_t;
+
 #define LV_COLOR_TRANSP  lv_color_hex(0x00ff00) 
 #define CONTENT_HEIGHT 160
 #define CONTENT_HEIGHT_BUTTONS 140

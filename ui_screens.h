@@ -60,4 +60,3 @@ void update_battery_percent();
 void alarm_alert();
 void alarm_start();
 void alarm_stop();
-char *get_cache_key_from_title(const char *title);

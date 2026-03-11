@@ -9,7 +9,7 @@ typedef struct {
     String ssid;
     String local_ip;
     String gateway_ip;
-    int orientation;
+   // int orientation;
     bool sleeping;
     float freemem;
     size_t disk_bytes;

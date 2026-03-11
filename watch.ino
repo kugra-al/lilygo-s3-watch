@@ -156,7 +156,7 @@ static void check_wifi()
         Serial.println(WiFi.localIP());
         // for (int i = 0; i < n; ++i) {
         if (!last_time_sync) {
-            configTime(GMTOFFSET_SEC, DAYLIGHTOFFSET_SEC, ntpServer);
+            configTime(utc_offset_value*3600, DAYLIGHTOFFSET_SEC, ntpServer);
             struct tm timeinfo;
             if (getLocalTime(&timeinfo)) {
                 last_time_sync = 1;
@@ -196,6 +196,10 @@ void setup()
     init_styles();
     init_screens();
     switch_to_screen(CLOCK_SCREEN);
+    utc_offset_value = get_int_key_value("utc_offset_value", DEFAULT_UTC_OFFSET);
+    utc2_offset_value = get_int_key_value("utc2_offset_value", DEFAULT_UTC2_OFFSET);
+    longitude_value = get_float_key_value("longitude_value", DEFAULT_LONGITUDE_VALUE);
+    latitude_value = get_float_key_value("latitude_value", DEFAULT_LATITUDE_VALUE);
     check_wifi();
     ui_alarm.hour = get_int_key_value("ui_alarm_hour", 0);
     ui_alarm.minute = get_int_key_value("ui_alarm_min", 0);
