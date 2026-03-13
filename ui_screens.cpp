@@ -249,8 +249,6 @@ void update_weather()
                 strcat(weatherBuf, textBuf);
                 snprintf(statusBuf, sizeof(statusBuf), "%s\n", String(code).c_str());
                 strcat(weatherStatusBuf, statusBuf);
-                //lv_obj_t *weather_date = ui_add_aligned_label(NULL, textBuf, NULL, &style_default_medium, &weather_align, NULL, screens[WEATHER_SCREEN]);
-                //lv_obj_t *weather_symbol = ui_add_aligned_label(NULL, code, weather_date, &style_weather, &weather_icon_align, NULL, screens[WEATHER_SCREEN]);
             }
             lv_label_set_text(weather_screen_label, String(weatherBuf).c_str());
             lv_label_set_text(weather_screen_status_label, String(weatherStatusBuf).c_str());
@@ -287,8 +285,6 @@ static void wifi_item_event_cb(lv_event_t *e)
         wifi_ssid_selected[32] = '\0';  // Force null termination
 
     }
-        //wifi_ssid_selected = lv_label_get_text(ssid_label);
-    // Ensure clicked stays checked
     lv_obj_add_state(clicked, LV_STATE_CHECKED);
 }
 
@@ -325,9 +321,6 @@ void ui_print_wifi_scan() {
         strncpy(ssidBuf, temp, sizeof(ssidBuf));
         ssidBuf[sizeof(ssidBuf)-1] = '\0';
 
-       //         scannedNetworks[i].rssi = WiFi.RSSI(i);
-      //  scannedNetworks[i].encryption = WiFi.encryptionType(i);
-      //  scannedNetworks[i].channel = WiFi.channel(i);
         lv_obj_t *item = lv_list_add_btn(list, NULL, ssidBuf);
         lv_obj_add_flag(item, LV_OBJ_FLAG_CHECKABLE);
         lv_label_set_long_mode(lv_obj_get_child(item, 0), LV_LABEL_LONG_WRAP);
@@ -679,11 +672,13 @@ void init_screens()
 
     // Secondary screens (these are not shown in the normal screen loop)
     secondary_screens[SETTINGS_SCREEN] = lv_obj_create(NULL);
+    secondary_screens[CACHE_SCREEN] = lv_obj_create(NULL);
     for (int i = 0; i < NUM_SECONDARY_SCREENS; i++) {
         lv_obj_set_style_bg_color(secondary_screens[i], lv_color_black(), LV_PART_MAIN);
         lv_obj_set_style_bg_opa(secondary_screens[i], LV_OPA_COVER, LV_PART_MAIN);
     }
     draw_settings_screen();
+    draw_cache_screen();
 }
 
 void back_button_cb(lv_event_t *e)
@@ -709,7 +704,9 @@ void settings_kb_event_cb(lv_event_t *e)
     lv_obj_t *kb = lv_event_get_target_obj(e);
 
     if(code == LV_EVENT_CANCEL) {   
+        lv_keyboard_set_textarea(kb, NULL);
         lv_obj_delete(settings_mbox);
+        settings_mbox = NULL;
         lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);                              
         return;
     }
@@ -719,11 +716,11 @@ void settings_kb_event_cb(lv_event_t *e)
         lv_obj_t *original_textbox = (lv_obj_t *)lv_obj_get_user_data(settings_mbox);
         msgbox_data_t *mbox_data = (msgbox_data_t *)lv_obj_get_user_data(original_textbox);
         const char *cache_key = (const char*)mbox_data->cache_key;
-        //lv_obj_t *original_textbox = (lv_obj_t *)mbox_data.parent_textarea;
+
         Serial.println(cache_key);
         Serial.println(settings_value);
         Serial.println(lv_textarea_get_text(original_textbox));
-        //Serial.println(original_value);
+
         if (mbox_data->default_float_ptr != NULL) {
             float settings_float = strtof(settings_value, NULL);
             *mbox_data->default_float_ptr = settings_float;
@@ -738,10 +735,10 @@ void settings_kb_event_cb(lv_event_t *e)
             Serial.printf("Contents of cache: %d\n", get_int_key_value(cache_key, -99));
         }
         lv_textarea_set_text(original_textbox, settings_value);
-        // Need to get value from mbox. Save to cache. Update whatever is in mem, update value of settings container
-        // Delete doesn't delete
-       // lv_obj_delete(settings_mbox);
-       // lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);                              
+        lv_keyboard_set_textarea(kb, NULL);
+        lv_obj_delete(settings_mbox);
+        settings_mbox = NULL;
+        lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);                             
         return;
     }
 }
@@ -752,19 +749,30 @@ static void settings_input_click_cb(lv_event_t * e)
     lv_event_code_t code = lv_event_get_code(e);
     lv_obj_t *target_input = lv_event_get_target_obj(e);
 
-    if (code == LV_EVENT_FOCUSED || code == LV_EVENT_CLICKED) {
+    if (code == LV_EVENT_CLICKED) {
         msgbox_data_t *mbox_data = (msgbox_data_t *)lv_obj_get_user_data(target_input);
         const char *title_text = (const char*)mbox_data->title;
         const char *default_text = lv_textarea_get_text(target_input);
-        settings_mbox = ui_show_input_box(title_text, default_text, secondary_screens[SETTINGS_SCREEN], &settings_textarea);
+        settings_mbox = ui_show_input_box(title_text, default_text, lv_layer_top(), &settings_textarea);
 
         lv_obj_set_user_data(settings_mbox, target_input);
         lv_keyboard_set_textarea(settings_keyboard, settings_textarea);
         lv_obj_clear_flag(settings_keyboard, LV_OBJ_FLAG_HIDDEN);
-    } else if (code == LV_EVENT_DEFOCUSED) {
-        lv_obj_add_flag(settings_keyboard, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_delete(settings_mbox);
-    }
+    } 
+}
+
+void draw_cache_screen()
+{
+    lv_obj_t *screen = secondary_screens[CACHE_SCREEN];
+    lv_obj_t *cache_title_label = ui_add_title_label("Cache", screen);
+
+    lv_obj_t *content = ui_add_content_container(CONTENT_HEIGHT_BUTTONS, cache_title_label, screen);
+
+    lv_obj_t *btn_container = ui_add_button_row(screen);
+    align_cfg_t btn_align = {0, 0, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_AUTO};
+    size_cfg_t btn_size = {40, 80};
+    lv_obj_t *settings_btn = ui_add_button(NULL, "Back", NULL, &style_default_small, back_button_cb, 
+        &btn_align, &btn_size, btn_container);
 }
 
 void draw_settings_screen()
@@ -802,7 +810,7 @@ void draw_settings_screen()
     lv_obj_set_grid_cell(settings_utc_textarea, LV_GRID_ALIGN_STRETCH, 1, 1, 
         LV_GRID_ALIGN_STRETCH, 3, 1);  
     lv_textarea_set_text(settings_utc_textarea, String(get_int_key_value("utc_offset", DEFAULT_UTC_OFFSET)).c_str());
-    lv_obj_add_event_cb(settings_utc_textarea, settings_input_click_cb, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(settings_utc_textarea, settings_input_click_cb, LV_EVENT_CLICKED, NULL);
     msgbox_data_t *utc_data = (msgbox_data_t *)malloc(sizeof(msgbox_data_t));
     utc_data->parent_textarea = settings_utc_textarea;
     utc_data->title = utc_offset;
@@ -818,7 +826,7 @@ void draw_settings_screen()
     lv_obj_set_grid_cell(settings_utc2_textarea, LV_GRID_ALIGN_STRETCH, 1, 1, 
         LV_GRID_ALIGN_STRETCH, 4, 1);  
     lv_textarea_set_text(settings_utc2_textarea, String(get_int_key_value("utc2_offset", DEFAULT_UTC2_OFFSET)).c_str());
-    lv_obj_add_event_cb(settings_utc2_textarea, settings_input_click_cb, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(settings_utc2_textarea, settings_input_click_cb, LV_EVENT_CLICKED, NULL);
     msgbox_data_t *utc2_data = (msgbox_data_t *)malloc(sizeof(msgbox_data_t));
     utc2_data->parent_textarea = settings_utc2_textarea;
     utc2_data->title = utc2_offset;
@@ -837,7 +845,7 @@ void draw_settings_screen()
     char longitude_str[16];
     sprintf(longitude_str, "%.4f", longitude_value);
     lv_textarea_set_text(settings_longitude_textarea, longitude_str);
-    lv_obj_add_event_cb(settings_longitude_textarea, settings_input_click_cb, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(settings_longitude_textarea, settings_input_click_cb, LV_EVENT_CLICKED, NULL);
     msgbox_data_t *longitude_data = (msgbox_data_t *)malloc(sizeof(msgbox_data_t));
     longitude_data->parent_textarea = settings_longitude_textarea;
     longitude_data->title = longitude;
@@ -856,7 +864,7 @@ void draw_settings_screen()
     char latitude_str[16];
     sprintf(latitude_str, "%.4f", latitude_value);
     lv_textarea_set_text(settings_latitude_textarea, latitude_str);  
-    lv_obj_add_event_cb(settings_latitude_textarea, settings_input_click_cb, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(settings_latitude_textarea, settings_input_click_cb, LV_EVENT_CLICKED, NULL);
     msgbox_data_t *latitude_data = (msgbox_data_t *)malloc(sizeof(msgbox_data_t));
     latitude_data->parent_textarea = settings_latitude_textarea;
     latitude_data->title = latitude;
@@ -881,7 +889,16 @@ void draw_settings_screen()
     lv_obj_add_style(settings_keyboard, &style_keyboard, LV_PART_ITEMS | LV_STATE_DISABLED);
     lv_keyboard_set_mode(settings_keyboard, LV_KEYBOARD_MODE_NUMBER);
     lv_obj_add_flag(settings_keyboard, LV_OBJ_FLAG_HIDDEN); 
-    lv_obj_add_event_cb(settings_keyboard, settings_kb_event_cb, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(settings_keyboard, settings_kb_event_cb, LV_EVENT_READY, NULL);
+    lv_obj_add_event_cb(settings_keyboard, settings_kb_event_cb, LV_EVENT_CANCEL, NULL);
+}
+
+void cache_button_cb(lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    if (code == LV_EVENT_CLICKED) {
+        lv_scr_load(secondary_screens[CACHE_SCREEN]);
+    }
 }
 
 void settings_button_cb(lv_event_t *e)
@@ -913,11 +930,13 @@ void draw_status_screen()
     };
     lv_obj_t *grid = ui_create_grid(col_dsc, row_dsc, rows, 9, content);
 
-
     lv_obj_t *btn_container = ui_add_button_row(screen);
     align_cfg_t btn_align = {0, 0, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_AUTO};
     size_cfg_t btn_size = {40, 80};
     lv_obj_t *settings_btn = ui_add_button(NULL, LV_SYMBOL_SETTINGS, NULL, &style_default_small, settings_button_cb, 
+        &btn_align, &btn_size, btn_container);
+    btn_align.align = LV_ALIGN_TOP_RIGHT;
+    lv_obj_t *cache_btn = ui_add_button(NULL, "Cache", NULL, &style_default_small, cache_button_cb, 
         &btn_align, &btn_size, btn_container);
 }
 
