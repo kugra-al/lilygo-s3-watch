@@ -13,6 +13,7 @@
 #include <WiFi.h>
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
+#include "nvs.h"
 #include "nvs_flash.h"
 #include "time.h"
 #include "config.h"
@@ -175,6 +176,57 @@ void nvs_full_reset() {
     //esp_restart();
 }
 
+void print_nvs_stats()
+{
+    nvs_stats_t stats;
+    nvs_get_stats(NULL, &stats);
+
+    Serial.println("NVS statistics:");
+    Serial.printf("Used entries: %d\n", stats.used_entries);
+    Serial.printf("Free entries: %d\n", stats.free_entries);
+    Serial.printf("Total entries: %d\n", stats.total_entries);
+    Serial.printf("Namespaces: %d\n", stats.namespace_count);
+}
+
+void list_all_namespaces() 
+{
+    nvs_flash_init();
+    
+    Serial.println("=== ALL NAMESPACES ===");
+    
+    // Iterate ALL namespaces
+    nvs_iterator_t it = NULL;
+    nvs_entry_find("nvs", NULL, NVS_TYPE_ANY, &it);
+    
+    int ns_count = 0;
+    while (it != NULL) {
+        nvs_entry_info_t info;
+        nvs_entry_info(it, &info);
+        
+        // Count entries per namespace (simple way)
+        Serial.printf("Namespace: %s\n", info.namespace_name);
+        
+        // Get next entry in same namespace
+        nvs_iterator_t next_it = NULL;
+        nvs_entry_find("nvs", info.namespace_name, NVS_TYPE_ANY, &next_it);
+        int entry_count = 0;
+        while (next_it != NULL) {
+            entry_count++;
+            nvs_entry_next(&next_it);
+        }
+        nvs_release_iterator(next_it);
+        
+        Serial.printf("  Entries: %d\n", entry_count);
+        ns_count++;
+        
+        nvs_entry_next(&it);
+    }
+    nvs_release_iterator(it);
+    
+    Serial.printf("Total namespaces: %d\n", ns_count);
+    Serial.println("=====================");
+}
+
 void setup()
 {
     Serial.begin(115200);
@@ -182,6 +234,8 @@ void setup()
     beginLvglHelper(instance);
     instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
     //nvs_full_reset();
+    print_nvs_stats();
+    list_all_namespaces();
     instance.onEvent([](DeviceEvent_t event, void *params, void * user_data) {
         if (instance.getPMUEventType(params) == PMU_EVENT_KEY_CLICKED) {
             last_event = millis();

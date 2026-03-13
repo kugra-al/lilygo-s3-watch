@@ -1,3 +1,4 @@
+#include "widgets/label/lv_label.h"
 #include "core/lv_obj_pos.h"
 #include "HardwareSerial.h"
 #include "ArduinoJson/Array/JsonArray.hpp"
@@ -7,6 +8,8 @@
 #include <HTTPClient.h>
 #include <WiFi.h>
 #include <ArduinoJson.h>
+#include "nvs.h"
+#include "nvs_flash.h"
 #include "cache.h"
 #include "ui_base.h"
 #include "ui_screens.h"
@@ -764,9 +767,24 @@ static void settings_input_click_cb(lv_event_t * e)
 void draw_cache_screen()
 {
     lv_obj_t *screen = secondary_screens[CACHE_SCREEN];
-    lv_obj_t *cache_title_label = ui_add_title_label("Cache", screen);
+    lv_obj_t *cache_title_label = ui_add_title_label("Cache/Storage", screen);
 
     lv_obj_t *content = ui_add_content_container(CONTENT_HEIGHT_BUTTONS, cache_title_label, screen);
+
+    nvs_stats_t stats;
+    nvs_get_stats(NULL, &stats);
+
+    lv_obj_t *used_entries = lv_label_create(content);
+    lv_label_set_text_fmt(used_entries, "Used: %d", stats.used_entries);
+    lv_obj_t *free_entries = lv_label_create(content);
+    lv_label_set_text_fmt(free_entries, "Free: %d", stats.free_entries);
+    lv_obj_align_to(free_entries, used_entries, LV_ALIGN_BOTTOM_LEFT, 0, 20);  
+    lv_obj_t *total_entries = lv_label_create(content);
+    lv_label_set_text_fmt(total_entries, "Total: %d", stats.total_entries);    
+    lv_obj_align_to(total_entries, free_entries, LV_ALIGN_BOTTOM_LEFT, 0, 20);   
+    lv_obj_t *namespaces = lv_label_create(content);
+    lv_label_set_text_fmt(namespaces, "Namespaces: %d", stats.namespace_count);   
+    lv_obj_align_to(namespaces, total_entries, LV_ALIGN_BOTTOM_LEFT, 0, 20); 
 
     lv_obj_t *btn_container = ui_add_button_row(screen);
     align_cfg_t btn_align = {0, 0, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_AUTO};
