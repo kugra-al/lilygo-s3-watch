@@ -61,3 +61,4 @@ lv_obj_t *init_popup(char *label_text, char *btn_text, void (*callback)(lv_event
 lv_obj_t *ui_keyboard_show();
 lv_obj_t *ui_create_grid(const int32_t *col_dsc, const int32_t *row_dsc, grid_row_t *rows, int num_rows, lv_obj_t *screen);
 lv_obj_t *ui_show_input_box(const char *title, const char *text_content, lv_obj_t *screen, lv_obj_t **target_textarea);
+lv_obj_t *ui_show_confirm_box(const char *title, void (*callback)(lv_event_t *), const char *confirm_text, lv_obj_t *screen);

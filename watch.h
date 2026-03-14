@@ -21,3 +21,4 @@ extern size_t  scannedCount;
 void start_wifi_scan();
 const char *get_wifi_password_for_ssid(const char *ssid);
 void toggle_wifi();
+void nvs_full_reset();

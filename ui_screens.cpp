@@ -764,6 +764,23 @@ static void settings_input_click_cb(lv_event_t * e)
     } 
 }
 
+void clear_cache_event_cb(lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    if (code == LV_EVENT_CLICKED) {
+        nvs_full_reset();
+    }
+    return;
+}
+
+void clear_cache_btn_cb(lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    if (code == LV_EVENT_CLICKED) {
+        ui_show_confirm_box("Clear Cache?", clear_cache_event_cb, "Clear Cache", lv_screen_active());
+    }
+}
+
 void draw_cache_screen()
 {
     lv_obj_t *screen = secondary_screens[CACHE_SCREEN];
@@ -791,6 +808,10 @@ void draw_cache_screen()
     size_cfg_t btn_size = {40, 80};
     lv_obj_t *settings_btn = ui_add_button(NULL, "Back", NULL, &style_default_small, back_button_cb, 
         &btn_align, &btn_size, btn_container);
+    btn_align.align = LV_ALIGN_TOP_RIGHT;
+    lv_obj_t *clear_cache_btn = ui_add_button(NULL, "Clear", NULL, &style_default_small, clear_cache_btn_cb, 
+        &btn_align, &btn_size, btn_container);
+
 }
 
 void draw_settings_screen()
