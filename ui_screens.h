@@ -1,3 +1,5 @@
+#include <lvgl.h>
+
 extern lv_obj_t *time_label, *time_label_2;
 extern lv_obj_t *date_label, *clock_temp_label, *clock_wind_label, *current_weather, *sun_status;
 extern lv_obj_t *status_label;
@@ -62,3 +64,4 @@ void update_battery_percent();
 void alarm_alert();
 void alarm_start();
 void alarm_stop();
+void update_cache_stats();

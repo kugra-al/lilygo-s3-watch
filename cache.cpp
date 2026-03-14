@@ -6,6 +6,7 @@
 #include <FFat.h>
 #include "cache.h"
 #include "watch.h"
+#include "ui_screens.h"
 
 Preferences cache;
 
@@ -146,6 +147,7 @@ void put_string_key_value(const char* key, String value) {
     cache.begin("settings", false);
     cache.putString(key, value);  
     cache.end();
+    update_cache_stats();
 }
 
 String get_string_key_value(const char* key, String defaultVal = "") {
@@ -160,6 +162,7 @@ void put_bool_key_value(const char *key, bool value)
     cache.begin("settings", false);
     cache.putBool(key, value);
     cache.end();
+    update_cache_stats();
 }
 
 bool get_bool_key_value(const char *key, bool defaultVal = false)
@@ -175,6 +178,7 @@ void put_int_key_value(const char *key, int value)
     cache.begin("settings", false);
     cache.putInt(key, value);
     cache.end();
+    update_cache_stats();
 }
 
 int get_int_key_value(const char *key, int defaultVal = 0)
@@ -190,6 +194,7 @@ void put_float_key_value(const char *key, float value)
     cache.begin("settings", false);
     cache.putFloat(key, value);
     cache.end();
+    update_cache_stats();
 }
 
 float get_float_key_value(const char *key, float defaultVal = 0)

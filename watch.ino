@@ -173,6 +173,7 @@ static void check_wifi()
 void nvs_full_reset() {
     Serial.println("Full NVS reset...");
     nvs_flash_erase();
+    update_cache_stats();
     //esp_restart();
 }
 
