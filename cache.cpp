@@ -7,8 +7,15 @@
 #include "cache.h"
 #include "watch.h"
 #include "ui_screens.h"
+#include "ui_screen_cache.h"
 
 Preferences cache;
+
+void nvs_full_reset() {
+    Serial.println("Full NVS reset...");
+    nvs_flash_erase();
+    update_cache_stats();
+}
 
 void mount_file_system()
 {

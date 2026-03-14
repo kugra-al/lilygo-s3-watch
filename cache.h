@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <Preferences.h>
+#include "nvs.h"
+#include "nvs_flash.h"
 
 extern Preferences cache;
 
@@ -20,3 +22,4 @@ bool delete_file(const char *path);
 bool write_JSON(const char *path, DynamicJsonDocument &doc);
 bool read_JSON(const char *path, DynamicJsonDocument &doc);
 bool save_wifi_to_file(const char *ssid, const char *password);
+void nvs_full_reset();

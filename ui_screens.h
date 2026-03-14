@@ -1,4 +1,11 @@
 #include <lvgl.h>
+#include "ui_screen_cache.h"
+#include "ui_screen_weather.h"
+#include "HardwareSerial.h"
+#include <LilyGoLib.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+#include "cache.h"
 
 extern lv_obj_t *time_label, *time_label_2;
 extern lv_obj_t *date_label, *clock_temp_label, *clock_wind_label, *current_weather, *sun_status;
@@ -24,9 +31,9 @@ typedef struct {
 } alarm_cfg_t;
 
 extern alarm_cfg_t ui_alarm;
-static lv_obj_t *screens[5];
+extern lv_obj_t *screens[];
 #define NUM_SCREENS (sizeof(screens) / sizeof(screens[0]))
-static lv_obj_t *secondary_screens[2];
+extern lv_obj_t *secondary_screens[];
 #define NUM_SECONDARY_SCREENS (sizeof(secondary_screens) / sizeof(secondary_screens[0]))
 
 #define CLOCK_SCREEN 0
@@ -47,10 +54,8 @@ static lv_obj_t *secondary_screens[2];
 void draw_clock_screen();
 void draw_status_screen();
 void draw_alarm_screen();
-void draw_weather_screen();
 void draw_wifi_screen();
 void draw_settings_screen();
-void draw_cache_screen();
 void ui_refresh_sensor_labels();
 void ui_update_wifi(int result);
 void ui_print_wifi_scan();
@@ -59,9 +64,8 @@ void switch_to_screen(int screen);
 void update_time();
 void update_date();
 void refresh_screen_headers();
-void update_weather();
 void update_battery_percent();
 void alarm_alert();
 void alarm_start();
 void alarm_stop();
-void update_cache_stats();
+void back_button_cb(lv_event_t *e);

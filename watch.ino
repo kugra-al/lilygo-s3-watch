@@ -170,13 +170,6 @@ static void check_wifi()
     lv_obj_add_style(wifi_label, &style_wifi, LV_PART_MAIN);
 }
 
-void nvs_full_reset() {
-    Serial.println("Full NVS reset...");
-    nvs_flash_erase();
-    update_cache_stats();
-    //esp_restart();
-}
-
 void print_nvs_stats()
 {
     nvs_stats_t stats;
