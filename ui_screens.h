@@ -45,6 +45,7 @@ extern lv_obj_t *secondary_screens[];
 // Secondary screens
 #define SETTINGS_SCREEN 0
 #define CACHE_SCREEN 1
+#define WIFI_SETTINGS_SCREEN 2
 
 #define DEFAULT_UTC_OFFSET 0
 #define DEFAULT_UTC2_OFFSET -1
@@ -56,6 +57,7 @@ void draw_status_screen();
 void draw_alarm_screen();
 void draw_wifi_screen();
 void draw_settings_screen();
+void draw_wifi_settings_screen();
 void ui_refresh_sensor_labels();
 void ui_update_wifi(int result);
 void ui_print_wifi_scan();

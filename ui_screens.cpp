@@ -35,7 +35,7 @@ alarm_cfg_t ui_alarm = {0, 0, false, false, 0};
 char wifi_ssid_selected[33];
 
 lv_obj_t *screens[5];
-lv_obj_t *secondary_screens[2];
+lv_obj_t *secondary_screens[3];
 
 static void clock_btn_event_cb(lv_event_t *e)
 {
@@ -554,12 +554,14 @@ void init_screens()
     // Secondary screens (these are not shown in the normal screen loop)
     secondary_screens[SETTINGS_SCREEN] = lv_obj_create(NULL);
     secondary_screens[CACHE_SCREEN] = lv_obj_create(NULL);
+    secondary_screens[WIFI_SETTINGS_SCREEN] = lv_obj_create(NULL);
     for (int i = 0; i < NUM_SECONDARY_SCREENS; i++) {
         lv_obj_set_style_bg_color(secondary_screens[i], lv_color_black(), LV_PART_MAIN);
         lv_obj_set_style_bg_opa(secondary_screens[i], LV_OPA_COVER, LV_PART_MAIN);
     }
     draw_settings_screen();
     draw_cache_screen();
+    draw_wifi_settings_screen();
 }
 
 void back_button_cb(lv_event_t *e)
@@ -861,6 +863,8 @@ void wifi_connect_button_cb(lv_event_t *e)
     lv_event_code_t code = lv_event_get_code(e);
     lv_obj_t *btn = lv_event_get_target_obj(e);
     if (code == LV_EVENT_CLICKED) {
+        if (!strlen(wifi_ssid_selected))
+            return;
         lv_obj_t *keyboard = lv_keyboard_create(screens[current_screen]);
         lv_obj_add_style(keyboard, &style_keyboard, LV_PART_MAIN);
         lv_obj_add_style(keyboard, &style_keyboard, LV_PART_ITEMS);
@@ -879,6 +883,19 @@ void wifi_connect_button_cb(lv_event_t *e)
     }
 }
 
+void draw_wifi_settings_screen()
+{
+    lv_obj_t *screen = secondary_screens[WIFI_SETTINGS_SCREEN];
+    lv_obj_t *wifi_settings_title_label = ui_add_title_label("Wifi Settings", screen);   
+    lv_obj_t *content = ui_add_content_container(CONTENT_HEIGHT_BUTTONS, wifi_settings_title_label, screen);
+
+    lv_obj_t *btn_container = ui_add_button_row(screen);
+    align_cfg_t btn_align = {0, 0, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_AUTO};
+    size_cfg_t btn_size = {40, 80};
+    lv_obj_t *settings_btn = ui_add_button(NULL, "Back", NULL, &style_default_small, back_button_cb, 
+        &btn_align, &btn_size, btn_container);    
+}
+
 void wifi_scan_btn_cb(lv_event_t *e)
 {
     if (monitor.sleeping)
@@ -887,6 +904,16 @@ void wifi_scan_btn_cb(lv_event_t *e)
     lv_obj_t *btn = lv_event_get_target_obj(e);
     if (code == LV_EVENT_CLICKED) {
        start_wifi_scan();
+    }
+}
+
+void wifi_settings_btn_cb(lv_event_t *e)
+{
+    if (monitor.sleeping)
+        return;
+    lv_event_code_t code = lv_event_get_code(e);
+    if (code == LV_EVENT_CLICKED) {
+        lv_scr_load(secondary_screens[WIFI_SETTINGS_SCREEN]);
     }
 }
 
@@ -900,7 +927,7 @@ void draw_wifi_screen()
     lv_obj_t *btn_container = ui_add_button_row(screen);
     align_cfg_t btn_align = {0, 0, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_AUTO};
     size_cfg_t btn_size = {40, 80};
-    lv_obj_t *settings_btn = ui_add_button(NULL, LV_SYMBOL_SETTINGS, NULL, &style_default_small, wifi_scan_btn_cb, 
+    lv_obj_t *settings_btn = ui_add_button(NULL, LV_SYMBOL_SETTINGS, NULL, &style_default_small, wifi_settings_btn_cb, 
         &btn_align, &btn_size, btn_container);
     btn_align.align = LV_ALIGN_TOP_MID;
     lv_obj_t *scan_btn = ui_add_button(NULL, LV_SYMBOL_REFRESH, NULL, &style_default_small, wifi_scan_btn_cb, 
