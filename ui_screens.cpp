@@ -2,15 +2,7 @@
 #include "core/lv_obj_pos.h"
 #include "ArduinoJson/Array/JsonArray.hpp"
 #include "misc/lv_area.h"
-#include <lvgl.h>
-#include <WiFi.h>
-#include "cache.h"
-#include "ui_base.h"
 #include "ui_screens.h"
-#include "config.h"
-#include "watch.h"
-#include "hw_monitor.h"
-
 
 lv_obj_t *time_label, *time_label_2;
 lv_obj_t *date_label, *clock_temp_label, *clock_wind_label, *current_weather, *sun_status;
@@ -883,15 +875,83 @@ void wifi_connect_button_cb(lv_event_t *e)
     }
 }
 
+const char *wifi_ap_ssid = "TW95018";
+const char *wifi_ap_password = "tl19fd9a";
+WiFiServer server(80);
+
+void wifi_setup_ap()
+{
+    Serial.println("Starting wifi ap..");
+
+    WiFi.softAP(wifi_ap_ssid, wifi_ap_password);
+
+    IPAddress IP = WiFi.softAPIP();
+    Serial.print("AP IP address: ");
+    Serial.println(IP);  // Usually 192.168.4.1
+    
+    server.begin();
+    wifi_ap_server = true;
+    Serial.println("Server started - connect to Watch-AP!");
+}
+
+void handle_clients() {
+    WiFiClient client = server.available();  // Check for new clients
+    
+    if (client) {
+        Serial.println("New client connected!");
+        
+        String request = "";
+        while (client.connected()) {
+            if (client.available()) {
+                String line = client.readStringUntil('\n');
+                request += line;
+                if (line == "\r") break;  // End of headers
+            }
+        }
+        
+        // Send HTML response
+        client.println("HTTP/1.1 200 OK");
+        client.println("Content-type:text/html");
+        client.println();
+        client.println("<!DOCTYPE html><html><body>");
+        client.println("<h1>Watch Connected!</h1>");
+        client.printf("<p>Uptime: %lu ms</p>", millis());
+        client.println("</body></html>");
+        
+        client.stop();
+        Serial.println("Client disconnected");
+    }
+}
+
+
+void wifi_start_local_server_cb(lv_event_t *e)
+{
+    if (monitor.sleeping)
+        return;
+    lv_event_code_t code = lv_event_get_code(e);
+    if (code == LV_EVENT_CLICKED) {
+        wifi_setup_ap();
+    }
+}
+
 void draw_wifi_settings_screen()
 {
     lv_obj_t *screen = secondary_screens[WIFI_SETTINGS_SCREEN];
     lv_obj_t *wifi_settings_title_label = ui_add_title_label("Wifi Settings", screen);   
     lv_obj_t *content = ui_add_content_container(CONTENT_HEIGHT_BUTTONS, wifi_settings_title_label, screen);
 
-    lv_obj_t *btn_container = ui_add_button_row(screen);
     align_cfg_t btn_align = {0, 0, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_AUTO};
-    size_cfg_t btn_size = {40, 80};
+    size_cfg_t btn_size = {40, 180};
+
+    lv_obj_t *local_server_btn = ui_add_button(NULL, "Start Local Server", NULL, &style_default_small, wifi_start_local_server_cb, 
+        &btn_align, &btn_size, content);  
+    btn_align.y = 50;
+    lv_obj_t *captive_portal_btn = ui_add_button(NULL, "Start Cap. Portal", NULL, &style_default_small, back_button_cb, 
+        &btn_align, &btn_size, content);  
+
+    btn_align.y = 0;
+    btn_size.width = 80;
+    lv_obj_t *btn_container = ui_add_button_row(screen);
     lv_obj_t *settings_btn = ui_add_button(NULL, "Back", NULL, &style_default_small, back_button_cb, 
         &btn_align, &btn_size, btn_container);    
 }

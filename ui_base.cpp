@@ -1,7 +1,5 @@
 #include <lvgl.h>
 extern const lv_font_t weather_icons;
-#include "ui_base.h"
-#include "cache.h"
 #include "ui_screens.h"
 
 lv_style_t style_default;           

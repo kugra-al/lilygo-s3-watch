@@ -12,6 +12,7 @@ bool is_sleeping = false;
 bool wifi_enabled = true;
 bool bluetooth_enabled = false;
 bool gps_enabled = false;
+bool wifi_ap_server = false;
 
 void hw_update_monitor()
 {
@@ -33,6 +34,7 @@ void hw_update_monitor()
     monitor.wifi_enabled = wifi_enabled;
     monitor.bluetooth_enabled = bluetooth_enabled;
     monitor.gps_enabled = gps_enabled;
+    monitor.wifi_ap_server = wifi_ap_server;
 }
 
 // Here we just dim the screen and block some loops. lightSleep and sleep both have some problems with what 

@@ -17,12 +17,13 @@ typedef struct {
     bool wifi_enabled;
     bool bluetooth_enabled;
     bool gps_enabled;
+    bool wifi_ap_server;
 } hw_monitor_t;
 
 extern hw_monitor_t monitor;
 extern int last_event;
 extern bool is_sleeping;
-extern bool wifi_enabled, bluetooth_enabled, gps_enabled;
+extern bool wifi_enabled, bluetooth_enabled, gps_enabled, wifi_ap_server;
 
 void hw_update_monitor();
 void fake_sleep();

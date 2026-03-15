@@ -1,6 +1,4 @@
 #include "ui_screens.h"
-#include "ui_screen_weather.h"
-#include "ui_base.h"
 
 lv_obj_t *weather_screen_label, *weather_screen_status_label;
 

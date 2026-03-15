@@ -16,13 +16,9 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "time.h"
-#include "config.h"
 #include <Preferences.h>
-#include "ui_base.h"
-#include "cache.h"
 #include "ui_screens.h"
-#include "watch.h"
-#include "hw_monitor.h"
+
 
 const char* ntpServer = "pool.ntp.org";  // European pool
 int last_button_click = 0;
@@ -158,7 +154,7 @@ static void check_wifi()
         Serial.println(WiFi.localIP());
         // for (int i = 0; i < n; ++i) {
         if (!last_time_sync) {
-            configTime(utc_offset_value*3600, DAYLIGHTOFFSET_SEC, ntpServer);
+            configTime(utc_offset_value*3600, 0, ntpServer);
             struct tm timeinfo;
             if (getLocalTime(&timeinfo)) {
                 last_time_sync = 1;
@@ -266,6 +262,8 @@ void loop()
 {
     lv_timer_handler();
     instance.loop();
+    if (monitor.wifi_ap_server)
+        handle_clients();
     if (!monitor.sleeping) {
         int current_millis = millis();
         // simple check for seconds (change to use lv_timer later)

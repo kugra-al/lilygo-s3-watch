@@ -1,7 +1,4 @@
 #include "ui_screens.h"
-#include "ui_screen_cache.h"
-#include "ui_base.h"
-#include "cache.h"
 
 lv_obj_t *cache_used_label, *cache_free_label, *cache_total_label, *cache_namespace_label;
 

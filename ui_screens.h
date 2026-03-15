@@ -5,7 +5,13 @@
 #include <LilyGoLib.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
+#include "ui_base.h"
+#include <WiFi.h>
+#include <WiFiServer.h>
+#include "watch.h"
+#include "hw_monitor.h"
 #include "cache.h"
+#include "config.h"
 
 extern lv_obj_t *time_label, *time_label_2;
 extern lv_obj_t *date_label, *clock_temp_label, *clock_wind_label, *current_weather, *sun_status;
@@ -71,3 +77,4 @@ void alarm_alert();
 void alarm_start();
 void alarm_stop();
 void back_button_cb(lv_event_t *e);
+void handle_clients();
