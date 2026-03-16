@@ -289,7 +289,7 @@ void loop()
             refresh_screen_headers();
             ui_refresh_sensor_labels();
         }
-        if (current_millis - last_wifi_check >= ONE_MINUTE && monitor.wifi_enabled) {
+        if (current_millis - last_wifi_check >= ONE_MINUTE && monitor.wifi_enabled && !monitor.wifi_ap_server) {
             last_wifi_check = current_millis;
             check_wifi();
         }

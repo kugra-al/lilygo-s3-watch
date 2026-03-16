@@ -30,6 +30,7 @@ static lv_color_t color_green = lv_color_hex(0x39FF14);
 static lv_color_t color_red = lv_color_hex(0xFF0000);
 static lv_color_t color_grey = lv_color_hex(0x808080);
 static lv_color_t color_yellow = lv_color_hex(0xFFFF00);
+static lv_color_t color_blue = lv_color_hex(0x147BFF);
 static lv_color_t color_default = color_green;
 
 // New styles
@@ -49,6 +50,7 @@ extern lv_style_t style_grid;
 extern lv_style_t style_container;
 extern lv_style_t style_title;
 extern lv_style_t style_keyboard;
+extern lv_style_t style_btn;
 
 void init_styles();
 lv_obj_t *ui_add_aligned_label(char *cache_key, char *default_text, lv_obj_t *align_to_obj, lv_style_t *style, align_cfg_t *aligns, size_cfg_t *sizes, lv_obj_t *screen);
@@ -62,3 +64,4 @@ lv_obj_t *ui_keyboard_show();
 lv_obj_t *ui_create_grid(const int32_t *col_dsc, const int32_t *row_dsc, grid_row_t *rows, int num_rows, lv_obj_t *screen);
 lv_obj_t *ui_show_input_box(const char *title, const char *text_content, lv_obj_t *screen, lv_obj_t **target_textarea);
 lv_obj_t *ui_show_confirm_box(const char *title, void (*callback)(lv_event_t *), const char *confirm_text, lv_obj_t *screen);
+lv_obj_t *ui_show_popup(const char *text, lv_obj_t *screen);

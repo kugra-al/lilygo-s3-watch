@@ -19,6 +19,17 @@ lv_style_t style_grid;
 lv_style_t style_container;
 lv_style_t style_title;
 lv_style_t style_keyboard;
+lv_style_t style_btn;
+
+void init_style_btn()
+{
+    lv_style_init(&style_btn);
+    lv_style_set_bg_color(&style_btn, lv_color_black());
+    lv_style_set_bg_opa(&style_btn, LV_OPA_COVER);
+    lv_style_set_border_color(&style_btn, color_default);  // Border in default_color
+    lv_style_set_border_width(&style_btn, 3);              // Border thickness (px)
+    lv_style_set_border_opa(&style_btn, LV_OPA_COVER);
+}
 
 void init_style_keyboard()
 {
@@ -116,6 +127,7 @@ void init_styles()
     init_style_grid();
     init_style_container();
     init_style_keyboard();
+    init_style_btn();
 }
 
 lv_obj_t *ui_add_aligned_label(char *cache_key, char *default_text, lv_obj_t *align_to_obj, 
@@ -153,14 +165,7 @@ lv_obj_t *ui_add_button(char *cache_key, char *default_text, lv_obj_t *align_to_
     else
         lv_obj_align(btn, aligns->align, aligns->x, aligns->y); /*Set the label to it and align it in the center below the label*/
 
-    static lv_style_t btn_style;
-    lv_style_init(&btn_style);
-    lv_style_set_bg_color(&btn_style, lv_color_black());
-    lv_style_set_bg_opa(&btn_style, LV_OPA_COVER);
-    lv_style_set_border_color(&btn_style, color_default);  // Border in default_color
-    lv_style_set_border_width(&btn_style, 3);              // Border thickness (px)
-    lv_style_set_border_opa(&btn_style, LV_OPA_COVER);
-    lv_obj_add_style(btn, &btn_style, 0);  // Main part, default state
+    lv_obj_add_style(btn, &style_btn, 0);  // Main part, default state
 
     lv_obj_t *btn_label = lv_label_create(btn);           /*Add a label to the button*/
     if (cache_key)
@@ -242,7 +247,7 @@ static void confirm_box_event_cb(lv_event_t * e) {
     lv_msgbox_close(mbox);
 }
 
-static void confirm_box_cancel_event_cb(lv_event_t * e)
+static void mbox_close_btn_event_cb(lv_event_t * e)
 {
     lv_obj_t *mbox = (lv_obj_t *)lv_event_get_user_data(e);
     lv_msgbox_close(mbox);
@@ -259,30 +264,38 @@ lv_obj_t *ui_show_confirm_box(const char *title, void (*callback)(lv_event_t *),
     lv_obj_t *content = lv_msgbox_get_content(mbox);                  
     lv_obj_add_style(mbox, &style_container, LV_PART_MAIN);
     lv_obj_add_style(mbox, &style_default_small, LV_PART_MAIN);
-    /* Text area inside msgbox */
-
-    static lv_style_t btn_style;
-    lv_style_init(&btn_style);
-    lv_style_set_bg_color(&btn_style, lv_color_black());
-    lv_style_set_bg_opa(&btn_style, LV_OPA_COVER);
-    lv_style_set_border_color(&btn_style, color_default);  // Border in default_color
-    lv_style_set_border_width(&btn_style, 3);              // Border thickness (px)
-    lv_style_set_border_opa(&btn_style, LV_OPA_COVER);
-    
+    /* Text area inside msgbox */   
 
     lv_obj_t *confirm_btn = lv_msgbox_add_footer_button(mbox, confirm_text);
     lv_obj_add_event_cb(confirm_btn, confirm_box_event_cb, LV_EVENT_CLICKED, (void*)callback);
-    lv_obj_add_style(confirm_btn, &btn_style, 0);  // Main part, default state
+    lv_obj_add_style(confirm_btn, &style_btn, 0);  // Main part, default state
     lv_obj_t *confirm_label = lv_obj_get_child(confirm_btn, 0);
     lv_obj_add_style(confirm_label, &style_default_small, 0);
 
     lv_obj_t *cancel_btn = lv_msgbox_add_footer_button(mbox, "Cancel");
-    lv_obj_add_event_cb(cancel_btn, confirm_box_cancel_event_cb, LV_EVENT_CLICKED, mbox);  // Pass mbox to close
-    lv_obj_add_style(cancel_btn, &btn_style, 0);  // Main part, default state
+    lv_obj_add_event_cb(cancel_btn, mbox_close_btn_event_cb, LV_EVENT_CLICKED, mbox);  // Pass mbox to close
+    lv_obj_add_style(cancel_btn, &style_btn, 0);  // Main part, default state
     lv_obj_t *cancel_label = lv_obj_get_child(cancel_btn, 0);
     lv_obj_add_style(cancel_label, &style_default_small, 0);
 
     return mbox;    
+}
+
+lv_obj_t *ui_show_popup(const char *text, lv_obj_t *screen)
+{
+    /* Modal message box */
+    lv_obj_t *mbox = lv_msgbox_create(screen);                                            
+                    
+    lv_obj_set_width(mbox, 230);
+    lv_msgbox_add_text(mbox, text);
+    lv_obj_add_style(mbox, &style_container, LV_PART_MAIN);
+    lv_obj_add_style(mbox, &style_default_small, LV_PART_MAIN);
+    lv_obj_t *close_btn = lv_msgbox_add_footer_button(mbox, "Close");
+    lv_obj_add_event_cb(close_btn, mbox_close_btn_event_cb, LV_EVENT_CLICKED, mbox);
+    lv_obj_add_style(close_btn, &style_btn, 0);  
+    lv_obj_t *close_label = lv_obj_get_child(close_btn, 0);
+    lv_obj_add_style(close_label, &style_default_small, 0);
+    return mbox;
 }
 
 lv_obj_t *init_popup(char *label_text, char *btn_text, void (*callback)(lv_event_t *))

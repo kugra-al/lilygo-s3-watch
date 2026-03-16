@@ -275,10 +275,14 @@ void refresh_screen_headers()
     if (!monitor.wifi_enabled)
         lv_style_set_text_color(&style_wifi, color_grey);
     else {
-        if (monitor.wifi_connected)
-            lv_style_set_text_color(&style_wifi, color_green);
-        else
-            lv_style_set_text_color(&style_wifi, color_red);
+        if (monitor.wifi_ap_server)
+            lv_style_set_text_color(&style_wifi, color_blue);
+        else {
+            if (monitor.wifi_connected)
+                lv_style_set_text_color(&style_wifi, color_green);
+            else
+                lv_style_set_text_color(&style_wifi, color_red);
+        }
     }
     int charge_adjust = 0;
     if (monitor.battery_percent >= 100)
@@ -888,7 +892,16 @@ void wifi_setup_ap()
     IPAddress IP = WiFi.softAPIP();
     Serial.print("AP IP address: ");
     Serial.println(IP);  // Usually 192.168.4.1
-    
+    char popup_text[256];
+    snprintf(popup_text, sizeof(popup_text),
+            "WiFi AP Started.\n"
+            "SSID: %s\n"
+            "Password: %s\n"
+            "IP: %s",
+            wifi_ap_ssid, wifi_ap_password, IP.toString().c_str());
+
+    lv_obj_t * mbox = ui_show_popup(popup_text, lv_scr_act());
+
     server.begin();
     wifi_ap_server = true;
     Serial.println("Server started - connect to Watch-AP!");
