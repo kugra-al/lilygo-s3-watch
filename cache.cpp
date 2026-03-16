@@ -11,6 +11,7 @@ Preferences cache;
 void nvs_full_reset() {
     Serial.println("Full NVS reset...");
     nvs_flash_erase();
+    // Need to restart after erasing flash for nvs stats to work
     ESP.restart();
 }
 

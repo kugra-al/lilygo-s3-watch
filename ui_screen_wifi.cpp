@@ -154,6 +154,13 @@ void wifi_connect_button_cb(lv_event_t *e)
     }
 }
 
+void wifi_disable_ap()
+{
+    WiFi.softAPdisconnect(true);
+    wifi_ap_server = false;
+    Serial.println("Wifi AP disabled");
+}
+
 WiFiServer server(80);
 
 void generate_random_alphanum(char *str, size_t len) {

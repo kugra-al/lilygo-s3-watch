@@ -5,3 +5,4 @@ void draw_wifi_settings_screen();
 void handle_clients();
 void ui_update_wifi(int result);
 void ui_print_wifi_scan();
+void wifi_disable_ap();

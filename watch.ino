@@ -40,6 +40,7 @@ void toggle_wifi()
         WiFi.disconnect(true);
         WiFi.mode(WIFI_OFF);
         wifi_enabled = false;
+        wifi_disable_ap();
     } else {
         start_wifi_scan();
         wifi_enabled = true;
