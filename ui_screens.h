@@ -1,6 +1,7 @@
 #include <lvgl.h>
 #include "ui_screen_cache.h"
 #include "ui_screen_weather.h"
+#include "ui_screen_wifi.h"
 #include "HardwareSerial.h"
 #include <LilyGoLib.h>
 #include <HTTPClient.h>
@@ -23,7 +24,6 @@ extern lv_obj_t *status_ssid_value_label, *status_local_ip_value_label, *status_
 extern lv_obj_t *alarm_time_label, *alarm_hours_roller, *alarm_minutes_roller;
 extern lv_obj_t *popup;
 extern lv_obj_t *weather_screen_label, *weather_screen_status_label;
-extern lv_obj_t *wifi_scan_container;
 extern int current_screen;
 extern int utc_offset_value, utc2_offset_value;
 extern float longitude_value, latitude_value;
@@ -61,12 +61,8 @@ extern lv_obj_t *secondary_screens[];
 void draw_clock_screen();
 void draw_status_screen();
 void draw_alarm_screen();
-void draw_wifi_screen();
 void draw_settings_screen();
-void draw_wifi_settings_screen();
 void ui_refresh_sensor_labels();
-void ui_update_wifi(int result);
-void ui_print_wifi_scan();
 void init_screens();
 void switch_to_screen(int screen);
 void update_time();
@@ -77,4 +73,3 @@ void alarm_alert();
 void alarm_start();
 void alarm_stop();
 void back_button_cb(lv_event_t *e);
-void handle_clients();
