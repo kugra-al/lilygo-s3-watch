@@ -486,7 +486,7 @@ void back_button_cb(lv_event_t *e)
     }
 }
 
-void wifi_switch_event_cb(lv_event_t *e)
+void settings_wifi_switch_event_cb(lv_event_t *e)
 {
     lv_obj_t *sw = lv_event_get_target_obj(e);
 
@@ -579,11 +579,11 @@ void draw_settings_screen()
     };
     lv_obj_t *grid = ui_create_grid(col_dsc, row_dsc, rows, 7, content);
 
-    lv_obj_t *wifi_switch = lv_switch_create(grid);
-    lv_obj_add_event_cb(wifi_switch, wifi_switch_event_cb, LV_EVENT_ALL, NULL);
+    lv_obj_t *settings_wifi_switch = lv_switch_create(grid);
+    lv_obj_add_event_cb(settings_wifi_switch, settings_wifi_switch_event_cb, LV_EVENT_ALL, NULL);
     if (monitor.wifi_enabled)
-        lv_obj_add_state(wifi_switch, LV_STATE_CHECKED);
-    lv_obj_set_grid_cell(wifi_switch, LV_GRID_ALIGN_STRETCH, 1, 1, 
+        lv_obj_add_state(settings_wifi_switch, LV_STATE_CHECKED);
+    lv_obj_set_grid_cell(settings_wifi_switch, LV_GRID_ALIGN_STRETCH, 1, 1, 
         LV_GRID_ALIGN_STRETCH, 0, 1);  
 
     settings_utc_textarea = lv_textarea_create(grid);   

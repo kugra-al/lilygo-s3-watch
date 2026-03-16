@@ -15,7 +15,7 @@ void clear_cache_btn_cb(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     if (code == LV_EVENT_CLICKED) {
-        ui_show_confirm_box("Clear Cache?", clear_cache_event_cb, "Clear Cache", lv_screen_active());
+        ui_show_confirm_box("Clear Cache?\n(requires restart)", clear_cache_event_cb, "Clear Cache", lv_screen_active());
     }
 }
 

@@ -226,6 +226,7 @@ void setup()
     //nvs_full_reset();
     print_nvs_stats();
     list_all_namespaces();
+    randomSeed(analogRead(0)); 
     instance.onEvent([](DeviceEvent_t event, void *params, void * user_data) {
         if (instance.getPMUEventType(params) == PMU_EVENT_KEY_CLICKED) {
             last_event = millis();

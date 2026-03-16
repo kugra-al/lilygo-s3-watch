@@ -230,7 +230,8 @@ lv_obj_t *ui_show_input_box(const char *title, const char *text_content, lv_obj_
     lv_textarea_set_one_line(textarea, true);                               
     lv_obj_set_width(textarea, lv_pct(100));   
     lv_textarea_set_text(textarea, text_content);      
-    *target_textarea = textarea;
+    if (target_textarea)
+        *target_textarea = textarea;
     lv_obj_align(mbox, LV_ALIGN_TOP_MID, 0, 40);
     return mbox;
 }

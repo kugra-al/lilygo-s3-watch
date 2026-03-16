@@ -106,7 +106,7 @@ void kb_event_cb(lv_event_t *e)
     }
 }
 
-lv_obj_t *show_input_box()
+lv_obj_t *show_wifi_input_box()
 {
     /* Modal message box */
     lv_obj_t *mbox = lv_msgbox_create(screens[current_screen]);                                            
@@ -144,7 +144,7 @@ void wifi_connect_button_cb(lv_event_t *e)
         lv_obj_add_style(keyboard, &style_keyboard, LV_PART_ITEMS | LV_STATE_FOCUSED);
         lv_obj_add_style(keyboard, &style_keyboard, LV_PART_ITEMS | LV_STATE_DISABLED);
         /* Send characters into our textarea */
-        wifi_input_box = show_input_box();
+        wifi_input_box = show_wifi_input_box();
         const char *saved_password = get_wifi_password_for_ssid(wifi_ssid_selected);
         if (saved_password)
             lv_textarea_set_text(wifi_password_text, saved_password);
@@ -154,14 +154,36 @@ void wifi_connect_button_cb(lv_event_t *e)
     }
 }
 
-const char *wifi_ap_ssid = "TW95018";
-const char *wifi_ap_password = "tl19fd9a";
 WiFiServer server(80);
+
+void generate_random_alphanum(char *str, size_t len) {
+    const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    size_t charset_len = strlen(charset);
+
+    for (size_t i = 0; i < len; ++i) {
+        str[i] = charset[random(charset_len)];
+    }
+    str[len] = '\0';
+}
 
 void wifi_setup_ap()
 {
     Serial.println("Starting wifi ap..");
 
+    // If there's no cached wifi_ap details, create new
+    char wifi_ap_ssid[9]; 
+    char wifi_ap_password[9]; 
+    String ssid_str = get_string_key_value("wifi_ap_ssid", "");
+    String pass_str = get_string_key_value("wifi_ap_pass", "");
+    ssid_str.toCharArray(wifi_ap_ssid, sizeof(wifi_ap_ssid));
+    pass_str.toCharArray(wifi_ap_password, sizeof(wifi_ap_password));
+
+    if (!strlen(wifi_ap_ssid) || !strlen(wifi_ap_password)) {
+        generate_random_alphanum(wifi_ap_ssid, 8);
+        generate_random_alphanum(wifi_ap_password, 8);
+        put_string_key_value("wifi_ap_ssid", wifi_ap_ssid);
+        put_string_key_value("wifi_ap_pass", wifi_ap_password);
+    }
     WiFi.softAP(wifi_ap_ssid, wifi_ap_password);
 
     IPAddress IP = WiFi.softAPIP();

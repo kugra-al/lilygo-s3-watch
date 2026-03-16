@@ -11,7 +11,7 @@ Preferences cache;
 void nvs_full_reset() {
     Serial.println("Full NVS reset...");
     nvs_flash_erase();
-    update_cache_stats();
+    ESP.restart();
 }
 
 void mount_file_system()
@@ -147,14 +147,23 @@ bool save_wifi_to_file(const char *ssid, const char *password)
     return write_JSON(wifi_file, doc);
 }
 
-void put_string_key_value(const char* key, String value) {
+void check_cache_key_length(const char *key) {
+    if (strlen(key) >= 15)
+        Serial.printf("WARNING! Key: %s must be under 15 chars. %s = %d chars\n", key, key, strlen(key));
+}
+
+void put_string_key_value(const char *key, String value) 
+{
+    check_cache_key_length(key);
     cache.begin("settings", false);
     cache.putString(key, value);  
     cache.end();
     update_cache_stats();
 }
 
-String get_string_key_value(const char* key, String defaultVal = "") {
+String get_string_key_value(const char *key, String defaultVal = "") 
+{
+    check_cache_key_length(key);
     cache.begin("settings", true);
     String val = cache.getString(key, defaultVal);
     cache.end();
@@ -163,6 +172,7 @@ String get_string_key_value(const char* key, String defaultVal = "") {
 
 void put_bool_key_value(const char *key, bool value)
 {
+    check_cache_key_length(key);
     cache.begin("settings", false);
     cache.putBool(key, value);
     cache.end();
@@ -171,6 +181,7 @@ void put_bool_key_value(const char *key, bool value)
 
 bool get_bool_key_value(const char *key, bool defaultVal = false)
 {
+    check_cache_key_length(key);
     cache.begin("settings", true);
     bool val = cache.getBool(key, defaultVal);
     cache.end();
@@ -179,6 +190,7 @@ bool get_bool_key_value(const char *key, bool defaultVal = false)
 
 void put_int_key_value(const char *key, int value)
 {
+    check_cache_key_length(key);
     cache.begin("settings", false);
     cache.putInt(key, value);
     cache.end();
@@ -187,6 +199,7 @@ void put_int_key_value(const char *key, int value)
 
 int get_int_key_value(const char *key, int defaultVal = 0)
 {
+    check_cache_key_length(key);
     cache.begin("settings", true);
     int val = cache.getInt(key, defaultVal);
     cache.end();
@@ -195,6 +208,7 @@ int get_int_key_value(const char *key, int defaultVal = 0)
 
 void put_float_key_value(const char *key, float value)
 {
+    check_cache_key_length(key);
     cache.begin("settings", false);
     cache.putFloat(key, value);
     cache.end();
@@ -203,6 +217,7 @@ void put_float_key_value(const char *key, float value)
 
 float get_float_key_value(const char *key, float defaultVal = 0)
 {
+    check_cache_key_length(key);
     cache.begin("settings", true);
     float val = cache.getFloat(key, defaultVal);
     cache.end();
