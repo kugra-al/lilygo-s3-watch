@@ -59,8 +59,6 @@ lv_obj_t *ui_add_button(char *cache_key, char *default_text, lv_obj_t *align_to_
 lv_obj_t *ui_add_title_label(char *label_text, lv_obj_t *screen);
 lv_obj_t *ui_add_content_container(int height, lv_obj_t *title, lv_obj_t *screen);
 lv_obj_t *ui_add_button_row(lv_obj_t *screen);
-lv_obj_t *init_popup(char *label_text, char *btn_text, void (*callback)(lv_event_t *));
-lv_obj_t *ui_keyboard_show();
 lv_obj_t *ui_create_grid(const int32_t *col_dsc, const int32_t *row_dsc, grid_row_t *rows, int num_rows, lv_obj_t *screen);
 lv_obj_t *ui_show_input_box(const char *title, const char *text_content, lv_obj_t *screen, lv_obj_t **target_textarea);
 lv_obj_t *ui_show_confirm_box(const char *title, void (*callback)(lv_event_t *), const char *confirm_text, lv_obj_t *screen);

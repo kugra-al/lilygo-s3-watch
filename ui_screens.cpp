@@ -56,7 +56,7 @@ void alarm_start()
 {
     ui_alarm.running = true;
     ui_alarm.end_time = millis()+ONE_MINUTE;
-    init_popup("Alarm", "Stop", alarm_stop_btn_cb);
+    ui_show_confirm_box("Alarm", alarm_stop_btn_cb, "Stop", lv_scr_act());
     if (monitor.sleeping)
         wakeup();
     last_event = millis();
@@ -374,7 +374,7 @@ void alarm_cancel_btn_event_cb(lv_event_t *e)
         return;
     lv_event_code_t code = lv_event_get_code(e);
     lv_obj_t *btn = lv_event_get_target_obj(e);
-    if (code == LV_EVENT_CLICKED) {
+    if (code == LV_EVENT_CLICKED) {wiz
         ui_alarm.set = false;  
         put_bool_key_value("ui_alarm_set", ui_alarm.set);
     }  
