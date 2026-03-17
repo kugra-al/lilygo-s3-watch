@@ -24,7 +24,7 @@ int current_screen = CLOCK_SCREEN;
 alarm_cfg_t ui_alarm = {0, 0, false, false, 0};
 
 lv_obj_t *screens[5];
-lv_obj_t *secondary_screens[3];
+lv_obj_t *secondary_screens[4];
 
 static void clock_btn_event_cb(lv_event_t *e)
 {
@@ -423,6 +423,12 @@ void draw_clock_screen()
     sun_status = ui_add_aligned_label("suntimes", "Rise: --:-- Set: --:--", container, &style_default_small, &aligns, &sun_size, screen);   
 }
 
+void draw_torch_screen()
+{
+    lv_obj_set_style_bg_color(secondary_screens[TORCH_SCREEN], lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(secondary_screens[TORCH_SCREEN], LV_OPA_COVER, LV_PART_MAIN);
+}
+
 void switch_to_screen(int screen)
 {
     Serial.println("Switching screen");
@@ -443,6 +449,16 @@ void screen_swipe_cb(lv_event_t * e)
         current_screen = (current_screen == 0) ? (NUM_SCREENS - 1) : (current_screen - 1);
     }
     switch_to_screen(current_screen);
+}
+
+void secondary_screen_swipe_cb(lv_event_t * e) 
+{
+    if (monitor.sleeping)
+        return;
+    lv_dir_t dir = lv_indev_get_gesture_dir(lv_indev_get_act());
+    if (dir == LV_DIR_LEFT || dir == LV_DIR_RIGHT) {
+        switch_to_screen(current_screen);
+    }
 }
 
 void init_screens()
@@ -469,13 +485,16 @@ void init_screens()
     secondary_screens[SETTINGS_SCREEN] = lv_obj_create(NULL);
     secondary_screens[CACHE_SCREEN] = lv_obj_create(NULL);
     secondary_screens[WIFI_SETTINGS_SCREEN] = lv_obj_create(NULL);
+    secondary_screens[TORCH_SCREEN] = lv_obj_create(NULL);
     for (int i = 0; i < NUM_SECONDARY_SCREENS; i++) {
         lv_obj_set_style_bg_color(secondary_screens[i], lv_color_black(), LV_PART_MAIN);
         lv_obj_set_style_bg_opa(secondary_screens[i], LV_OPA_COVER, LV_PART_MAIN);
+        lv_obj_add_event_cb(secondary_screens[i], secondary_screen_swipe_cb, LV_EVENT_GESTURE, NULL);
     }
     draw_settings_screen();
     draw_cache_screen();
     draw_wifi_settings_screen();
+    draw_torch_screen();
 }
 
 void back_button_cb(lv_event_t *e)

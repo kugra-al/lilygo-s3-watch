@@ -19,7 +19,9 @@
 #include <Preferences.h>
 #include "ui_screens.h"
 
-
+#define LEFT_BTN_PIN 0
+volatile bool left_btn_pressed = false;
+bool torch_active = false;
 const char* ntpServer = "pool.ntp.org";  // European pool
 int last_button_click = 0;
 static unsigned long last_millis = 0, wifi_start_time = 0, last_weather_check = 0, 
@@ -33,6 +35,10 @@ typedef struct {
 
 wifi_t *scannedNetworks = nullptr;
 size_t  scannedCount    = 0;
+
+void IRAM_ATTR handleLeftButtonPress() {
+    left_btn_pressed = true;
+}
 
 void toggle_wifi()
 {
@@ -167,74 +173,23 @@ static void check_wifi()
     lv_obj_add_style(wifi_label, &style_wifi, LV_PART_MAIN);
 }
 
-void print_nvs_stats()
-{
-    nvs_stats_t stats;
-    nvs_get_stats(NULL, &stats);
-
-    Serial.println("NVS statistics:");
-    Serial.printf("Used entries: %d\n", stats.used_entries);
-    Serial.printf("Free entries: %d\n", stats.free_entries);
-    Serial.printf("Total entries: %d\n", stats.total_entries);
-    Serial.printf("Namespaces: %d\n", stats.namespace_count);
-}
-
-void list_all_namespaces() 
-{
-    nvs_flash_init();
-    
-    Serial.println("=== ALL NAMESPACES ===");
-    
-    // Iterate ALL namespaces
-    nvs_iterator_t it = NULL;
-    nvs_entry_find("nvs", NULL, NVS_TYPE_ANY, &it);
-    
-    int ns_count = 0;
-    while (it != NULL) {
-        nvs_entry_info_t info;
-        nvs_entry_info(it, &info);
-        
-        // Count entries per namespace (simple way)
-        Serial.printf("Namespace: %s\n", info.namespace_name);
-        
-        // Get next entry in same namespace
-        nvs_iterator_t next_it = NULL;
-        nvs_entry_find("nvs", info.namespace_name, NVS_TYPE_ANY, &next_it);
-        int entry_count = 0;
-        while (next_it != NULL) {
-            entry_count++;
-            nvs_entry_next(&next_it);
-        }
-        nvs_release_iterator(next_it);
-        
-        Serial.printf("  Entries: %d\n", entry_count);
-        ns_count++;
-        
-        nvs_entry_next(&it);
-    }
-    nvs_release_iterator(it);
-    
-    Serial.printf("Total namespaces: %d\n", ns_count);
-    Serial.println("=====================");
-}
-
 void setup()
 {
     Serial.begin(115200);
     instance.begin();
     beginLvglHelper(instance);
     instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
-    //nvs_full_reset();
-    print_nvs_stats();
-    list_all_namespaces();
-    randomSeed(analogRead(0)); 
+    randomSeed(analogRead(0)); // Used for generating random strings
+    pinMode(LEFT_BTN_PIN, INPUT_PULLUP);
+    attachInterrupt(LEFT_BTN_PIN, handleLeftButtonPress, FALLING);
     instance.onEvent([](DeviceEvent_t event, void *params, void * user_data) {
         if (instance.getPMUEventType(params) == PMU_EVENT_KEY_CLICKED) {
             last_event = millis();
             if (monitor.sleeping)
                 wakeup();
-            else
+            else {
                 switch_to_screen(CLOCK_SCREEN);
+            }
             Serial.println("Power button pressed");
             if (millis() - last_button_click <= ONE_SECOND) {
                 Serial.println("Double click detected");
@@ -264,10 +219,26 @@ void loop()
 {
     lv_timer_handler();
     instance.loop();
+
     if (monitor.wifi_ap_server)
         handle_clients();
     if (!monitor.sleeping) {
         int current_millis = millis();
+        if (left_btn_pressed) {
+            left_btn_pressed = false;
+            if (current_screen == CLOCK_SCREEN) {
+                if (!torch_active) {
+                    lv_scr_load(secondary_screens[TORCH_SCREEN]);
+                    torch_active = true;
+                } else {
+                    switch_to_screen(CLOCK_SCREEN);
+                    torch_active = false;
+                }
+
+            }
+            Serial.println("Left btn pressed!");
+        }
+
         // simple check for seconds (change to use lv_timer later)
         if (current_millis - last_millis >= ONE_SECOND) {
             last_millis = current_millis;

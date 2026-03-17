@@ -52,6 +52,7 @@ extern lv_obj_t *secondary_screens[];
 #define SETTINGS_SCREEN 0
 #define CACHE_SCREEN 1
 #define WIFI_SETTINGS_SCREEN 2
+#define TORCH_SCREEN 3
 
 #define DEFAULT_UTC_OFFSET 0
 #define DEFAULT_UTC2_OFFSET -1
