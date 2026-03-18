@@ -26,122 +26,13 @@ const char* ntpServer = "pool.ntp.org";  // European pool
 int last_button_click = 0;
 static unsigned long last_millis = 0, wifi_start_time = 0, last_weather_check = 0, 
     last_wifi_check = 0, last_status_check = 0, last_time_sync = 0;
-bool saved_defined_network = false, wifi_scanning = false;
-int wifi_connection_attempts = 0;
 
 typedef struct {
     char hours[8], minutes[8];
 } alarm_t;
 
-wifi_t *scannedNetworks = nullptr;
-size_t  scannedCount    = 0;
-
 void IRAM_ATTR handleLeftButtonPress() {
     left_btn_pressed = true;
-}
-
-void toggle_wifi()
-{
-    if (monitor.wifi_enabled) {
-        WiFi.disconnect(true);
-        WiFi.mode(WIFI_OFF);
-        wifi_enabled = false;
-        wifi_disable_ap();
-    } else {
-        start_wifi_scan();
-        wifi_enabled = true;
-    }
-}
-
-bool ssid_exists(const char *ssid) {
-    for (size_t i = 0; i < scannedCount; ++i) {
-        if (strcmp(scannedNetworks[i].ssid, ssid) == 0) {
-            return true;
-        }
-    }
-    return false;
-}
-
-static void save_stored_networks(int n)
-{
-    // Reallocate array to exact size
-    free(scannedNetworks);
-    scannedNetworks = (wifi_t *)malloc(n * sizeof(wifi_t));
-    scannedCount = 0;                 
-    if (!scannedNetworks) {
-        return;
-    }
-
-    for (int i = 0; i < n; ++i) {
-        String ssidStr = WiFi.SSID(i);     
-        // Remove empty and dupes
-        if (ssidStr.length() == 0 || ssid_exists(ssidStr.c_str()))
-            continue;
-        strncpy(scannedNetworks[scannedCount].ssid,
-                ssidStr.c_str(),
-                sizeof(scannedNetworks[scannedCount].ssid) - 1);
-        scannedNetworks[scannedCount].ssid[
-            sizeof(scannedNetworks[scannedCount].ssid) - 1] = '\0';
-        scannedNetworks[i].connected = false;
-        scannedNetworks[i].rssi = WiFi.RSSI(i);
-        scannedNetworks[i].encryption = WiFi.encryptionType(i);
-        scannedNetworks[i].channel = WiFi.channel(i);
-        scannedCount++;
-    }
-    ui_print_wifi_scan();
-}
-
-const char *get_wifi_password_for_ssid(const char *ssid) 
-{
-    DynamicJsonDocument nets(WIFI_BYTES);
-    read_JSON("/wifi.json", nets);
-    Serial.println("Read json successfully");
-    JsonArray networks = nets["networks"].as<JsonArray>();
-    Serial.println("Network read success");
-    serializeJson(nets, Serial);
-    Serial.println();
-    for (JsonObject net : networks) {
-        if (ssid == net["ssid"])
-            return net["password"];
-    }
-    return "";
-}
-
-static void connect_to_saved_wifi()
-{
-    DynamicJsonDocument nets(WIFI_BYTES);
-    read_JSON("/wifi.json", nets);
-    Serial.println("Read json successfully");
-    JsonArray networks = nets["networks"].as<JsonArray>();
-    Serial.println("Network read success");
-    serializeJson(nets, Serial);
-    Serial.println();
-    if (scannedCount == 0 || !scannedNetworks) {
-        Serial.printf("No networks_found: %d\n", scannedCount);
-        return;
-    }
-    for (JsonObject net : networks) {
-        for (size_t i = 0; i < scannedCount; i++) {
-            Serial.println("Found network:");
-            Serial.println(scannedNetworks[i].ssid);
-            if (String(scannedNetworks[i].ssid) == net["ssid"]) {
-                WiFi.begin(net["ssid"] | "", net["password"] | "");
-                Serial.printf("Connecting to: %s %s\n", String(net["ssid"]).c_str(), String(net["password"]).c_str());
-                WiFi.scanDelete();
-                return;
-            }
-        }
-    }
-}
-
-void start_wifi_scan()
-{
-    WiFi.mode(WIFI_STA);
-    WiFi.disconnect();
-    WiFi.scanNetworks(true, false);
-    Serial.println("Starting wifi scan"); 
-    wifi_scanning = true;
-    wifi_connection_attempts++;
 }
 
 static void check_wifi()

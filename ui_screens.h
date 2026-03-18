@@ -12,6 +12,7 @@
 #include "esp_wifi.h"
 #include "watch.h"
 #include "hw_monitor.h"
+#include "hw_wifi.h"
 #include "cache.h"
 #include "config.h"
 #include "html_files.h"
