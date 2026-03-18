@@ -2,6 +2,9 @@
 
 static lv_obj_t *wifi_password_text;
 char wifi_ssid_selected[33];
+char current_wifi_ssid[33];
+char current_wifi_password[65];
+
 lv_obj_t *wifi_scan_container;
 lv_obj_t *wifi_input_box;
 
@@ -173,6 +176,24 @@ void generate_random_alphanum(char *str, size_t len) {
     str[len] = '\0';
 }
 
+bool get_current_wifi(char* ssid, char* pass, size_t max_len) {
+    if (!monitor.wifi_connected) {
+        strcpy(ssid, "");
+        strcpy(pass, "");
+        return false;
+    }
+    
+    wifi_config_t conf;
+    if (esp_wifi_get_config(WIFI_IF_STA, &conf) == ESP_OK) {
+        strncpy((char*)ssid, (char*)conf.sta.ssid, max_len - 1);
+        ssid[max_len - 1] = '\0';
+        strncpy((char*)pass, (char*)conf.sta.password, max_len - 1);
+        pass[max_len - 1] = '\0';
+        return true;
+    }
+    return false;
+}
+
 void wifi_setup_ap()
 {
     Serial.println("Starting wifi ap..");
@@ -191,6 +212,17 @@ void wifi_setup_ap()
         put_string_key_value("wifi_ap_ssid", wifi_ap_ssid);
         put_string_key_value("wifi_ap_pass", wifi_ap_password);
     }
+    // If already connected, change mode and reconnect
+    if (monitor.wifi_connected) {
+        if (get_current_wifi(current_wifi_ssid, current_wifi_password, sizeof(current_wifi_ssid))) {
+            // Have to disconnect 
+            WiFi.disconnect(true);
+            delay(1000);
+            WiFi.mode(WIFI_MODE_APSTA);
+            WiFi.begin(current_wifi_ssid, current_wifi_password);
+            Serial.printf("Connecting to: %s %s\n", current_wifi_ssid, current_wifi_password);
+        }
+    }
     WiFi.softAP(wifi_ap_ssid, wifi_ap_password);
 
     IPAddress IP = WiFi.softAPIP();
@@ -204,7 +236,7 @@ void wifi_setup_ap()
             "IP: %s",
             wifi_ap_ssid, wifi_ap_password, IP.toString().c_str());
 
-    lv_obj_t * mbox = ui_show_popup(popup_text, lv_scr_act());
+    lv_obj_t *mbox = ui_show_popup(popup_text, lv_scr_act());
 
     server.begin();
     wifi_ap_server = true;

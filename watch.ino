@@ -159,7 +159,6 @@ static void check_wifi()
         lv_style_set_text_color(&style_wifi, color_green);
         Serial.print("WiFi connected! IP: ");
         Serial.println(WiFi.localIP());
-        // for (int i = 0; i < n; ++i) {
         if (!last_time_sync) {
             configTime(utc_offset_value*3600, 0, ntpServer);
             struct tm timeinfo;

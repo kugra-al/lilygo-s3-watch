@@ -9,6 +9,7 @@
 #include "ui_base.h"
 #include <WiFi.h>
 #include <WiFiServer.h>
+#include "esp_wifi.h"
 #include "watch.h"
 #include "hw_monitor.h"
 #include "cache.h"

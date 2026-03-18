@@ -1,4 +1,6 @@
 extern lv_obj_t *wifi_scan_container;
+extern char current_wifi_ssid[];
+extern char current_wifi_password[];
 
 void draw_wifi_screen();
 void draw_wifi_settings_screen();
