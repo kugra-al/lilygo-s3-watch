@@ -1,6 +1,7 @@
 #include <lvgl.h>
 #include "ui_screen_cache.h"
 #include "ui_screen_weather.h"
+#include "ui_screen_gps.h"
 #include "ui_screen_wifi.h"
 #include "HardwareSerial.h"
 #include <LilyGoLib.h>
@@ -49,7 +50,8 @@ extern lv_obj_t *secondary_screens[];
 #define STATUS_SCREEN 1
 #define WEATHER_SCREEN 2
 #define ALARM_SCREEN 3
-#define WIFI_SCREEN 4
+#define GPS_SCREEN 4
+#define WIFI_SCREEN 5
 
 // Secondary screens
 #define SETTINGS_SCREEN 0

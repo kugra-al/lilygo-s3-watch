@@ -23,7 +23,7 @@ float longitude_value, latitude_value;
 int current_screen = CLOCK_SCREEN;
 alarm_cfg_t ui_alarm = {0, 0, false, false, 0};
 
-lv_obj_t *screens[5];
+lv_obj_t *screens[6];
 lv_obj_t *secondary_screens[4];
 
 static void clock_btn_event_cb(lv_event_t *e)
@@ -468,6 +468,7 @@ void init_screens()
     screens[STATUS_SCREEN] = lv_obj_create(NULL);
     screens[WEATHER_SCREEN] = lv_obj_create(NULL);
     screens[ALARM_SCREEN] = lv_obj_create(NULL);
+    screens[GPS_SCREEN] = lv_obj_create(NULL);
     screens[WIFI_SCREEN] = lv_obj_create(NULL);
     for (int i = 0; i < NUM_SCREENS; i++) {
         lv_obj_set_style_bg_color(screens[i], lv_color_black(), LV_PART_MAIN);
@@ -478,6 +479,7 @@ void init_screens()
     draw_status_screen();
     draw_alarm_screen();
     draw_weather_screen();
+    draw_gps_screen();
     draw_wifi_screen();
     draw_screen_headers();
 
@@ -511,6 +513,15 @@ void settings_wifi_switch_event_cb(lv_event_t *e)
 
     if (lv_event_get_code(e) == LV_EVENT_VALUE_CHANGED) {
         toggle_wifi();
+    }       
+}
+
+void settings_gps_switch_event_cb(lv_event_t *e)
+{
+    lv_obj_t *sw = lv_event_get_target_obj(e);
+
+    if (lv_event_get_code(e) == LV_EVENT_VALUE_CHANGED) {
+        toggle_gps();
     }       
 }
 
@@ -604,6 +615,13 @@ void draw_settings_screen()
         lv_obj_add_state(settings_wifi_switch, LV_STATE_CHECKED);
     lv_obj_set_grid_cell(settings_wifi_switch, LV_GRID_ALIGN_STRETCH, 1, 1, 
         LV_GRID_ALIGN_STRETCH, 0, 1);  
+
+    lv_obj_t *settings_gps_switch = lv_switch_create(grid);
+    lv_obj_add_event_cb(settings_gps_switch, settings_gps_switch_event_cb, LV_EVENT_ALL, NULL);
+    if (monitor.gps_enabled)
+        lv_obj_add_state(settings_gps_switch, LV_STATE_CHECKED);
+    lv_obj_set_grid_cell(settings_gps_switch, LV_GRID_ALIGN_STRETCH, 1, 1, 
+        LV_GRID_ALIGN_STRETCH, 2, 1); 
 
     settings_utc_textarea = lv_textarea_create(grid);   
     lv_obj_add_style(settings_utc_textarea, &style_container, LV_PART_MAIN);                              

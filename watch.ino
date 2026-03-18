@@ -159,6 +159,7 @@ void loop()
         }
         if (current_millis - last_wifi_check >= ONE_MINUTE && monitor.wifi_enabled && !monitor.wifi_ap_server) {
             last_wifi_check = current_millis;
+            update_gps_stats(1000);
             check_wifi();
         }
         if (last_event && current_millis - last_event >= TWO_MINUTES) {
