@@ -37,7 +37,7 @@ static void wifi_item_event_cb(lv_event_t *e)
 }
 
 // Antenna on twatch is made of cheese, so boost these up a bit. -69 is right next to a router
-int rssi_to_bars(int rssi) {
+int rssi_to_num(int rssi) {
     if (rssi >= -60) return 5;
     if (rssi >= -80) return 4;
     if (rssi >= -90) return 3;
@@ -65,7 +65,7 @@ void ui_print_wifi_scan() {
         }
         char temp[64];
         Serial.printf("Rssi for %s: %d\n", scannedNetworks[i].ssid, scannedNetworks[i].rssi);
-        snprintf(temp, sizeof(temp), "%s %d*", ssidBuf, rssi_to_bars(scannedNetworks[i].rssi));
+        snprintf(temp, sizeof(temp), "%s %d*", ssidBuf, rssi_to_num(scannedNetworks[i].rssi));
         strncpy(ssidBuf, temp, sizeof(ssidBuf));
         ssidBuf[sizeof(ssidBuf)-1] = '\0';
 
@@ -226,14 +226,19 @@ void handle_clients() {
             }
         }
         
-        // Send HTML response
-        client.println("HTTP/1.1 200 OK");
-        client.println("Content-type:text/html");
-        client.println();
-        client.println("<!DOCTYPE html><html><body>");
-        client.println("<h1>Watch Connected!</h1>");
-        client.printf("<p>Uptime: %lu ms</p>", millis());
-        client.println("</body></html>");
+        if (file_exists(SETTINGS_HTML)) {
+            // Send HTML response
+            client.println("HTTP/1.1 200 OK");
+            client.println("Content-type:text/html");
+            client.println();
+            String settings_html = read_file(SETTINGS_HTML);
+            client.println(settings_html);
+        } else {
+            client.println("HTTP/1.1 404 Not Found");
+            client.println("Content-type:text/plain");
+            client.println();
+            client.println("404: File Not Found");
+        }
         
         client.stop();
         Serial.println("Client disconnected");

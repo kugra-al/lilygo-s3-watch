@@ -13,6 +13,7 @@
 #include "hw_monitor.h"
 #include "cache.h"
 #include "config.h"
+#include "html_files.h"
 
 extern lv_obj_t *time_label, *time_label_2;
 extern lv_obj_t *date_label, *clock_temp_label, *clock_wind_label, *current_weather, *sun_status;

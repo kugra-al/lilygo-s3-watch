@@ -201,6 +201,7 @@ void setup()
         }
     }, POWER_EVENT, NULL);
     mount_file_system();
+    save_html_files_to_disk();
     hw_update_monitor();
     init_styles();
     init_screens();
@@ -215,6 +216,17 @@ void setup()
     ui_alarm.set = get_bool_key_value("ui_alarm_set", false);
 }
 
+void toggle_torch()
+{
+    if (!torch_active) {
+        lv_scr_load(secondary_screens[TORCH_SCREEN]);
+        torch_active = true;
+    } else {
+        switch_to_screen(CLOCK_SCREEN);
+        torch_active = false;
+    }
+}
+
 void loop()
 {
     lv_timer_handler();
@@ -227,14 +239,7 @@ void loop()
         if (left_btn_pressed) {
             left_btn_pressed = false;
             if (current_screen == CLOCK_SCREEN) {
-                if (!torch_active) {
-                    lv_scr_load(secondary_screens[TORCH_SCREEN]);
-                    torch_active = true;
-                } else {
-                    switch_to_screen(CLOCK_SCREEN);
-                    torch_active = false;
-                }
-
+                toggle_torch();
             }
             Serial.println("Left btn pressed!");
         }
