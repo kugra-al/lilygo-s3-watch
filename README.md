@@ -9,4 +9,5 @@ A simple watch face designed for the Lilygo T-Watch S3 Plus
   - Cache manager
 - 7 day weather
 - Alarm
+- GPS stats
 - Wifi manager

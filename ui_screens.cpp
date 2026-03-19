@@ -12,13 +12,13 @@ lv_obj_t *status_ssid_value_label, *status_local_ip_value_label, *status_gateway
     *status_mem_value_label, *alarm_time_status_label, *status_ffat_value_label;
 lv_obj_t *alarm_time_label, *alarm_hours_roller, *alarm_minutes_roller;
 lv_obj_t *popup;
-lv_obj_t *settings_utc_textarea, *settings_utc2_textarea, *settings_longitude_textarea, *settings_latitude_textarea;
+lv_obj_t *settings_utc_textarea, *settings_utc2_textarea, *settings_latitude_textarea, *settings_longitude_textarea;
 lv_obj_t *settings_keyboard;
 lv_obj_t *settings_mbox;
 lv_obj_t *settings_textarea = NULL;
 
 int utc_offset_value, utc2_offset_value;
-float longitude_value, latitude_value;
+float latitude_value, longitude_value;
 
 int current_screen = CLOCK_SCREEN;
 alarm_cfg_t ui_alarm = {0, 0, false, false, 0};
@@ -215,7 +215,12 @@ void refresh_screen_headers()
     }
     // These need to be realigned if wifi label changes position
     lv_obj_align_to(bluetooth_label, wifi_label, LV_ALIGN_TOP_RIGHT, -25, 0);
+    
     lv_obj_align_to(gps_label, bluetooth_label, LV_ALIGN_TOP_RIGHT, -20, 0);
+    if (!monitor.gps_enabled)
+        lv_style_set_text_color(&style_gps, color_red);
+    else
+        lv_style_set_text_color(&style_gps, color_default);
     if (ui_alarm.set)
         lv_obj_add_style(alarm_symbol_label, &style_connected, LV_PART_MAIN);
     else
@@ -244,8 +249,8 @@ void draw_screen_headers()
     wifi_label = ui_add_aligned_label(NULL, LV_SYMBOL_WIFI, battery_label, &style_wifi, &aligns, NULL, header);
 
     aligns.x = -10;
-    bluetooth_label = ui_add_aligned_label(NULL, LV_SYMBOL_BLUETOOTH, wifi_label, &style_inactive, &aligns, NULL, header);
-    gps_label = ui_add_aligned_label(NULL, LV_SYMBOL_GPS, bluetooth_label, &style_inactive, &aligns, NULL, header);
+    bluetooth_label = ui_add_aligned_label(NULL, LV_SYMBOL_BLUETOOTH, wifi_label, &style_bluetooth, &aligns, NULL, header);
+    gps_label = ui_add_aligned_label(NULL, LV_SYMBOL_GPS, bluetooth_label, &style_gps, &aligns, NULL, header);
     alarm_symbol_label = ui_add_aligned_label(NULL, LV_SYMBOL_BELL, gps_label, &style_inactive, &aligns, NULL, header);
     aligns = {0, 0, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_AUTO};
     time_label_2 = ui_add_aligned_label("time_2", "--:--:--", NULL, &style_default_small, &aligns, NULL, header);
@@ -596,7 +601,7 @@ void draw_settings_screen()
     
     static int32_t col_dsc[] = {140, 80, LV_GRID_TEMPLATE_LAST};
     static int32_t row_dsc[] = {30, 30, 30, 30, 30, 30, 30, LV_GRID_TEMPLATE_LAST};
-    const char *utc_offset = "UTC Offset", *utc2_offset = "UTC2 Offset", *longitude = "Longitude", *latitude = "Latitude";
+    const char *utc_offset = "UTC Offset", *utc2_offset = "UTC2 Offset", *latitude = "Latitude", *longitude = "Longitude";
 
     static grid_row_t rows[] = {
         {"Toggle Wifi", NULL},
@@ -604,8 +609,8 @@ void draw_settings_screen()
         {"Toggle GPS", NULL},
         {utc_offset, NULL},
         {utc2_offset, NULL},
-        {longitude, NULL},
-        {latitude, NULL}
+        {latitude, NULL},
+        {longitude, NULL}
     };
     lv_obj_t *grid = ui_create_grid(col_dsc, row_dsc, rows, 7, content);
 
@@ -655,31 +660,12 @@ void draw_settings_screen()
     utc2_data->default_int_ptr = &utc2_offset_value;
     lv_obj_set_user_data(settings_utc2_textarea, utc2_data);
 
-    settings_longitude_textarea = lv_textarea_create(grid);   
-    lv_obj_add_style(settings_longitude_textarea, &style_container, LV_PART_MAIN);                              
-    lv_textarea_set_one_line(settings_longitude_textarea, true);                               
-    lv_obj_set_width(settings_longitude_textarea, lv_pct(100));  
-    lv_obj_set_grid_cell(settings_longitude_textarea, LV_GRID_ALIGN_STRETCH, 1, 1, 
-        LV_GRID_ALIGN_STRETCH, 5, 1);
-    float longitude_value = get_float_key_value("longitude", DEFAULT_LONGITUDE_VALUE);
-    char longitude_str[16];
-    sprintf(longitude_str, "%.4f", longitude_value);
-    lv_textarea_set_text(settings_longitude_textarea, longitude_str);
-    lv_obj_add_event_cb(settings_longitude_textarea, settings_input_click_cb, LV_EVENT_CLICKED, NULL);
-    msgbox_data_t *longitude_data = (msgbox_data_t *)malloc(sizeof(msgbox_data_t));
-    longitude_data->parent_textarea = settings_longitude_textarea;
-    longitude_data->title = longitude;
-    longitude_data->cache_key = "longitude";
-    longitude_data->default_int_ptr = NULL;
-    longitude_data->default_float_ptr = &longitude_value;
-    lv_obj_set_user_data(settings_longitude_textarea, longitude_data);
-
     settings_latitude_textarea = lv_textarea_create(grid);   
     lv_obj_add_style(settings_latitude_textarea , &style_container, LV_PART_MAIN);                              
     lv_textarea_set_one_line(settings_latitude_textarea, true);                               
     lv_obj_set_width(settings_latitude_textarea, lv_pct(100));  
     lv_obj_set_grid_cell(settings_latitude_textarea, LV_GRID_ALIGN_STRETCH, 1, 1, 
-        LV_GRID_ALIGN_STRETCH, 6, 1);
+        LV_GRID_ALIGN_STRETCH, 5, 1);
     float latitude_value = get_float_key_value("latitude", DEFAULT_LATITUDE_VALUE);
     char latitude_str[16];
     sprintf(latitude_str, "%.4f", latitude_value);
@@ -692,6 +678,25 @@ void draw_settings_screen()
     latitude_data->default_int_ptr = NULL;
     latitude_data->default_float_ptr = &latitude_value;
     lv_obj_set_user_data(settings_latitude_textarea, latitude_data);
+
+    settings_longitude_textarea = lv_textarea_create(grid);   
+    lv_obj_add_style(settings_longitude_textarea, &style_container, LV_PART_MAIN);                              
+    lv_textarea_set_one_line(settings_longitude_textarea, true);                               
+    lv_obj_set_width(settings_longitude_textarea, lv_pct(100));  
+    lv_obj_set_grid_cell(settings_longitude_textarea, LV_GRID_ALIGN_STRETCH, 1, 1, 
+        LV_GRID_ALIGN_STRETCH, 6, 1);
+    float longitude_value = get_float_key_value("longitude", DEFAULT_LONGITUDE_VALUE);
+    char longitude_str[16];
+    sprintf(longitude_str, "%.4f", longitude_value);
+    lv_textarea_set_text(settings_longitude_textarea, longitude_str);
+    lv_obj_add_event_cb(settings_longitude_textarea, settings_input_click_cb, LV_EVENT_CLICKED, NULL);
+    msgbox_data_t *longitude_data = (msgbox_data_t *)malloc(sizeof(msgbox_data_t));
+    longitude_data->parent_textarea = settings_longitude_textarea;
+    longitude_data->title = longitude;
+    longitude_data->cache_key = "longitude";
+    longitude_data->default_int_ptr = NULL;
+    longitude_data->default_float_ptr = &longitude_value;
+    lv_obj_set_user_data(settings_longitude_textarea, longitude_data);
 
     lv_obj_t *btn_container = ui_add_button_row(screen);
     align_cfg_t btn_align = {0, 0, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_AUTO};

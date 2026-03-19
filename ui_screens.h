@@ -61,8 +61,8 @@ extern lv_obj_t *secondary_screens[];
 
 #define DEFAULT_UTC_OFFSET 0
 #define DEFAULT_UTC2_OFFSET -1
-#define DEFAULT_LONGITUDE_VALUE -0.1275
 #define DEFAULT_LATITUDE_VALUE 51.5033
+#define DEFAULT_LONGITUDE_VALUE -0.1275
 
 void draw_clock_screen();
 void draw_status_screen();

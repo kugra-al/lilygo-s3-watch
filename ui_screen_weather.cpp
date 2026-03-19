@@ -38,10 +38,10 @@ char *get_weather_icon(int code)
 void update_weather()
 {
     Serial.println("Attempting to fetch weather");
-    char longitude_str[16];
-    sprintf(longitude_str, "%.4f", longitude_value);
     char latitude_str[16];
     sprintf(latitude_str, "%.4f", latitude_value);
+    char longitude_str[16];
+    sprintf(longitude_str, "%.4f", longitude_value);
     String url = String("https://api.open-meteo.com/v1/forecast?latitude=")+latitude_str+
         "&longitude="+longitude_str+"&current_weather=true&daily=sunrise,sunset,weather_code,temperature_2m_max,"+
         "temperature_2m_min&timezone=Europe/Vilnius&forecast_days=14";  

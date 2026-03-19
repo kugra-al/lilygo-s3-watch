@@ -44,6 +44,8 @@ extern lv_style_t style_disconnected;
 extern lv_style_t style_roller;
 extern lv_style_t style_roller_selected;
 extern lv_style_t style_wifi;
+extern lv_style_t style_bluetooth;
+extern lv_style_t style_gps;
 extern lv_style_t style_charge;
 extern lv_style_t style_weather;
 extern lv_style_t style_grid;

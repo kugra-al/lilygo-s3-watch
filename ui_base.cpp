@@ -14,6 +14,7 @@ lv_style_t style_roller_selected;
 lv_style_t style_charge;
 lv_style_t style_wifi;
 lv_style_t style_bluetooth;
+lv_style_t style_gps;
 lv_style_t style_weather;
 lv_style_t style_grid;
 lv_style_t style_container;
@@ -110,6 +111,7 @@ void init_styles()
         { &style_charge, &lv_font_montserrat_16, color_yellow, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
         { &style_wifi, &lv_font_montserrat_16, color_red, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
         { &style_bluetooth, &lv_font_montserrat_16, color_red, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
+        { &style_gps, &lv_font_montserrat_16, color_red, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
         { &style_weather, &weather_icons, color_default, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL },
         { &style_title, &lv_font_montserrat_24, color_default, LV_COLOR_TRANSP, LV_COLOR_TRANSP, NULL}
     };
