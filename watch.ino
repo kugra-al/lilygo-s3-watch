@@ -35,6 +35,36 @@ void IRAM_ATTR handleLeftButtonPress() {
     left_btn_pressed = true;
 }
 
+void sync_current_time()
+{
+    if (last_time_sync)
+        return;
+    // Priorize gps time
+    if (monitor.gps_enabled && instance.gps.time.isValid() && instance.gps.date.isValid()) {
+        struct tm gps_tm = {0};
+        gps_tm.tm_year = instance.gps.date.year() - 1900;
+        gps_tm.tm_mon  = instance.gps.date.month() - 1;
+        gps_tm.tm_mday = instance.gps.date.day();
+        gps_tm.tm_hour = instance.gps.time.hour();
+        gps_tm.tm_min  = instance.gps.time.minute();
+        gps_tm.tm_sec  = instance.gps.time.second();
+        
+        time_t gps_time = mktime(&gps_tm);
+        gps_time += utc_offset_value * 3600;
+
+        struct timeval tv = {gps_time, 0};
+        settimeofday(&tv, NULL);
+        Serial.println("GPS time synced");
+        last_time_sync = millis();
+    } else {
+        if (monitor.wifi_connected) {
+            configTime(utc_offset_value*3600, 0, ntpServer);
+            Serial.println("NTP time synced"); 
+            last_time_sync = millis();
+        }
+    }
+}
+
 static void check_wifi()
 {
     Serial.println("Wifi check");
@@ -50,15 +80,6 @@ static void check_wifi()
         lv_style_set_text_color(&style_wifi, color_green);
         Serial.print("WiFi connected! IP: ");
         Serial.println(WiFi.localIP());
-        if (!last_time_sync) {
-            configTime(utc_offset_value*3600, 0, ntpServer);
-            struct tm timeinfo;
-            if (getLocalTime(&timeinfo)) {
-                last_time_sync = 1;
-                Serial.println("NTP time synced!");
-                Serial.printf("Time: %02d:%02d:%02d\n", timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
-            } 
-        }
     }
     lv_obj_add_style(wifi_label, &style_wifi, LV_PART_MAIN);
 }

@@ -90,6 +90,7 @@ void update_date()
 
 void update_time() 
 {
+    sync_current_time();
     struct tm timeinfo;
     if(!getLocalTime(&timeinfo)) {
         if (current_screen == CLOCK_SCREEN) {

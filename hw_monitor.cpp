@@ -11,7 +11,7 @@ int last_event = 0;
 bool is_sleeping = false;
 bool wifi_enabled = true;
 bool bluetooth_enabled = false;
-bool gps_enabled = false;
+bool gps_enabled = true;
 bool wifi_ap_server = false;
 
 void hw_update_monitor()

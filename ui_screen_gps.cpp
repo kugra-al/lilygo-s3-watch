@@ -1,6 +1,7 @@
+#include <cstdio>
 #include <cstdlib>
 #include "ui_screens.h"
-lv_obj_t *gps_satellites_label, *gps_latitude_label, *gps_longitude_label, *gps_altitude_label, *gps_status_label;
+lv_obj_t *gps_satellites_label, *gps_latitude_label, *gps_longitude_label, *gps_altitude_label, *gps_time_label, *gps_status_label;
 
 void gps_sync_confirm_btn_cb(lv_event_t *e)
 {
@@ -61,14 +62,16 @@ void draw_gps_screen()
         {"Latitude", &gps_latitude_label},
         {"Longitude", &gps_longitude_label},
         {"Altitude", &gps_altitude_label},
+        {"Time (UTC)", &gps_time_label},
         {"Status", &gps_status_label}
     };
-    lv_obj_t *grid = ui_create_grid(col_dsc, row_dsc, rows, 5, content);
+    lv_obj_t *grid = ui_create_grid(col_dsc, row_dsc, rows, 6, content);
 
     lv_label_set_text(gps_satellites_label, GPS_DEFAULT_TEXT);
     lv_label_set_text(gps_latitude_label, GPS_DEFAULT_TEXT);
     lv_label_set_text(gps_longitude_label, GPS_DEFAULT_TEXT);
     lv_label_set_text(gps_altitude_label, GPS_DEFAULT_TEXT);
+    lv_label_set_text(gps_time_label, GPS_DEFAULT_TEXT);
     lv_label_set_text(gps_status_label, monitor.gps_enabled ? LV_SYMBOL_OK : LV_SYMBOL_CLOSE);
 
     lv_obj_t *btn_container = ui_add_button_row(screen);
@@ -114,5 +117,8 @@ void update_gps_stats(unsigned long ms)
         lv_label_set_text_fmt(gps_latitude_label, "%.5f", instance.gps.location.isValid() ? instance.gps.location.lat() : 0);
         lv_label_set_text_fmt(gps_longitude_label, "%.5f", instance.gps.location.isValid() ? instance.gps.location.lng() : 0);
         lv_label_set_text_fmt(gps_altitude_label, "%.2fm", instance.gps.altitude.isValid() ? instance.gps.altitude.meters() : 0);
+        if (instance.gps.time.isValid()) 
+            lv_label_set_text_fmt(gps_time_label, "%02d:%02d:%02d", instance.gps.time.hour(), instance.gps.time.minute(), instance.gps.time.second());
+        
     }
 }
