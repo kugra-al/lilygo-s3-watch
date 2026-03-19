@@ -1,7 +1,9 @@
+#include "LilyGoWatchS3.h"
 #include <cstdio>
 #include <cstdlib>
 #include "ui_screens.h"
 lv_obj_t *gps_satellites_label, *gps_latitude_label, *gps_longitude_label, *gps_altitude_label, *gps_time_label, *gps_status_label;
+bool gps_manually_toggled = false;
 
 void gps_sync_confirm_btn_cb(lv_event_t *e)
 {
@@ -21,6 +23,8 @@ void gps_sync_button_cb(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     if (code == LV_EVENT_CLICKED) {
+        if (!instance.gps.location.isValid())
+            return;
         const char *latitude_label = lv_label_get_text(gps_latitude_label);
         const char *longitude_label = lv_label_get_text(gps_longitude_label);
         if (lv_strcmp(latitude_label, GPS_DEFAULT_TEXT) != 0 && lv_strcmp(longitude_label, GPS_DEFAULT_TEXT) != 0) {
@@ -42,6 +46,7 @@ void gps_toggle_button_cb(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     if (code == LV_EVENT_CLICKED) {
+        gps_manually_toggled = true;
         toggle_gps();
     }
 }
@@ -119,6 +124,14 @@ void update_gps_stats(unsigned long ms)
         lv_label_set_text_fmt(gps_altitude_label, "%.2fm", instance.gps.altitude.isValid() ? instance.gps.altitude.meters() : 0);
         if (instance.gps.time.isValid()) 
             lv_label_set_text_fmt(gps_time_label, "%02d:%02d:%02d", instance.gps.time.hour(), instance.gps.time.minute(), instance.gps.time.second());
+        // GPS starts enabled to get time, but once we get location data, turn it off to save battery
+        if (instance.gps.location.isValid()) {
+            // If we manually toggled it, don't turn it off
+            if (!gps_manually_toggled) {
+                gps_enabled = false;
+                Serial.println("GPS auto disabled");
+            }
+        }
         
     }
 }

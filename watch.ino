@@ -25,7 +25,7 @@ bool torch_active = false;
 const char* ntpServer = "pool.ntp.org";  // European pool
 int last_button_click = 0;
 static unsigned long last_millis = 0, wifi_start_time = 0, last_weather_check = 0, 
-    last_wifi_check = 0, last_status_check = 0, last_time_sync = 0;
+    last_gps_check = 0, last_wifi_check = 0, last_status_check = 0, last_time_sync = 0;
 
 typedef struct {
     char hours[8], minutes[8];
@@ -119,8 +119,8 @@ void setup()
     switch_to_screen(CLOCK_SCREEN);
     utc_offset_value = get_int_key_value("utc_offset", DEFAULT_UTC_OFFSET);
     utc2_offset_value = get_int_key_value("utc2_offset", DEFAULT_UTC2_OFFSET);
-    longitude_value = get_float_key_value("longitude", DEFAULT_LONGITUDE_VALUE);
     latitude_value = get_float_key_value("latitude", DEFAULT_LATITUDE_VALUE);
+    longitude_value = get_float_key_value("longitude", DEFAULT_LONGITUDE_VALUE);
     check_wifi();
     ui_alarm.hour = get_int_key_value("ui_alarm_hour", 0);
     ui_alarm.minute = get_int_key_value("ui_alarm_min", 0);
@@ -178,9 +178,12 @@ void loop()
             refresh_screen_headers();
             ui_refresh_sensor_labels();
         }
+        if (current_millis - last_gps_check >= ONE_MINUTE && monitor.gps_enabled) {
+            last_gps_check = current_millis;
+            update_gps_stats(1000);
+        }
         if (current_millis - last_wifi_check >= ONE_MINUTE && monitor.wifi_enabled && !monitor.wifi_ap_server) {
             last_wifi_check = current_millis;
-            update_gps_stats(1000);
             check_wifi();
         }
         if (last_event && current_millis - last_event >= TWO_MINUTES) {
