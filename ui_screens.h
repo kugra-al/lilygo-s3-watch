@@ -31,6 +31,7 @@ extern lv_obj_t *weather_screen_label, *weather_screen_status_label;
 extern int current_screen;
 extern int utc_offset_value, utc2_offset_value;
 extern float longitude_value, latitude_value;
+extern lv_obj_t *settings_utc_textarea, *settings_utc2_textarea, *settings_latitude_textarea, *settings_longitude_textarea;
 
 typedef struct {
     int hour;
@@ -79,3 +80,4 @@ void alarm_alert();
 void alarm_start();
 void alarm_stop();
 void back_button_cb(lv_event_t *e);
+void update_settings_val(const char *cache_key, lv_obj_t *textarea, int *int_val, float *float_val);

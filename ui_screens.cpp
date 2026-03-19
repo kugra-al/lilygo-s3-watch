@@ -530,6 +530,25 @@ void settings_gps_switch_event_cb(lv_event_t *e)
     }       
 }
 
+void update_settings_val(const char *cache_key, lv_obj_t *textarea, int *int_val, float *float_val)
+{
+    char settings_val[64] = {0};
+    if (int_val != NULL) {
+        put_int_key_value(cache_key, *int_val);
+        sprintf(settings_val, "%d", *int_val); 
+        Serial.printf("Writing %d to %s\n", *int_val, cache_key);
+        Serial.printf("Contents of cache: %d\n", get_int_key_value(cache_key, -99));
+    } else if (float_val != NULL) {
+        put_float_key_value(cache_key, *float_val);
+        sprintf(settings_val, "%.5f", *float_val);
+        Serial.printf("Writing %.5f to %s\n", *float_val, cache_key);
+        Serial.printf("Contents of cache: %d\n", get_float_key_value(cache_key, -99));
+    }
+    if (strlen(settings_val))
+        lv_textarea_set_text(textarea, settings_val);
+
+}
+
 void settings_kb_event_cb(lv_event_t *e) 
 {
     lv_event_code_t code = lv_event_get_code(e);
@@ -556,17 +575,16 @@ void settings_kb_event_cb(lv_event_t *e)
         if (mbox_data->default_float_ptr != NULL) {
             float settings_float = strtof(settings_value, NULL);
             *mbox_data->default_float_ptr = settings_float;
-            put_float_key_value(cache_key, settings_float);
+            update_settings_val(cache_key, original_textbox, NULL, &settings_float);
+            //put_float_key_value(cache_key, settings_float);
 
         } else if (mbox_data->default_int_ptr != NULL) {
             int settings_int = strtol(settings_value, NULL, 10);
             *mbox_data->default_int_ptr = settings_int;
+            update_settings_val(cache_key, original_textbox, &settings_int, NULL);
             put_int_key_value(cache_key, settings_int);
-
-            Serial.printf("Writing %d to %s\n", settings_int, cache_key);
-            Serial.printf("Contents of cache: %d\n", get_int_key_value(cache_key, -99));
         }
-        lv_textarea_set_text(original_textbox, settings_value);
+        //lv_textarea_set_text(original_textbox, settings_value);
         lv_keyboard_set_textarea(kb, NULL);
         lv_obj_delete(settings_mbox);
         settings_mbox = NULL;

@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include "ui_screens.h"
 lv_obj_t *gps_satellites_label, *gps_latitude_label, *gps_longitude_label, *gps_altitude_label, *gps_status_label;
 
@@ -6,8 +7,11 @@ void gps_sync_confirm_btn_cb(lv_event_t *e)
     lv_event_code_t code = lv_event_get_code(e);
     if (code == LV_EVENT_CLICKED) {
         const char *latitude_label = lv_label_get_text(gps_latitude_label);
+        float latitude_val = strtof(latitude_label, NULL);
         const char *longitude_label = lv_label_get_text(gps_longitude_label);
-        // Need to write to settings
+        float longitude_val = strtof(longitude_label, NULL);
+        update_settings_val("latitude", settings_latitude_textarea, NULL, &latitude_val);
+        update_settings_val("longitude", settings_longitude_textarea, NULL, &longitude_val);
         return;
     }
 }
