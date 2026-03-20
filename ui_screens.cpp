@@ -24,7 +24,7 @@ int current_screen = CLOCK_SCREEN;
 alarm_cfg_t ui_alarm = {0, 0, false, false, 0};
 
 lv_obj_t *screens[6];
-lv_obj_t *secondary_screens[4];
+lv_obj_t *secondary_screens[5];
 
 static void clock_btn_event_cb(lv_event_t *e)
 {
@@ -493,6 +493,7 @@ void init_screens()
     secondary_screens[SETTINGS_SCREEN] = lv_obj_create(NULL);
     secondary_screens[CACHE_SCREEN] = lv_obj_create(NULL);
     secondary_screens[WIFI_SETTINGS_SCREEN] = lv_obj_create(NULL);
+    secondary_screens[WIFI_MANAGE_SCREEN] = lv_obj_create(NULL);
     secondary_screens[TORCH_SCREEN] = lv_obj_create(NULL);
     for (int i = 0; i < NUM_SECONDARY_SCREENS; i++) {
         lv_obj_set_style_bg_color(secondary_screens[i], lv_color_black(), LV_PART_MAIN);
@@ -502,6 +503,7 @@ void init_screens()
     draw_settings_screen();
     draw_cache_screen();
     draw_wifi_settings_screen();
+    draw_wifi_manage_screen();
     draw_torch_screen();
 }
 

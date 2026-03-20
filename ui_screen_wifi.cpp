@@ -2,9 +2,11 @@
 
 static lv_obj_t *wifi_password_text;
 char wifi_ssid_selected[33];
+char wifi_manager_ssid_selected[33];
 
 lv_obj_t *wifi_scan_container;
 lv_obj_t *wifi_input_box;
+lv_obj_t *saved_networks_container;
 
 void ui_update_wifi(int result)
 {
@@ -165,6 +167,106 @@ void wifi_start_local_server_cb(lv_event_t *e)
     }
 }
 
+static void wifi_manager_item_event_cb(lv_event_t *e)
+{
+    lv_obj_t *clicked = (lv_obj_t *)lv_event_get_target(e);
+    lv_obj_t *list = lv_obj_get_parent(clicked);
+    Serial.println("Clicked");
+    // Uncheck all siblings
+    uint32_t child_cnt = lv_obj_get_child_cnt(list);
+    for (uint32_t i = 0; i < child_cnt; i++) {
+        lv_obj_t *child = lv_obj_get_child(list, i);
+        if (child != clicked) {
+            lv_obj_clear_state(child, LV_STATE_CHECKED);
+        }
+    }
+    Serial.println("After click");
+    lv_obj_t *ssid_label = lv_obj_get_child(clicked, 0);
+    if (ssid_label) {
+        const char *text = lv_list_get_btn_text(saved_networks_container, clicked);
+        Serial.printf("Selected: %s", text);
+        strncpy(wifi_manager_ssid_selected, text, 32);
+        wifi_manager_ssid_selected[32] = '\0';  // Force null termination
+
+    }
+    lv_obj_add_state(clicked, LV_STATE_CHECKED);
+}
+
+void draw_saved_networks()
+{
+    const char *wifi_file = "/wifi.json";
+    DynamicJsonDocument doc(WIFI_BYTES);
+
+    // Read existing
+    if (file_exists(wifi_file)) {
+        read_JSON(wifi_file, doc);
+    }
+
+    // Guarantee root object
+    if (!doc.is<JsonObject>()) {
+        doc.clear();
+        doc.to<JsonObject>();
+    }
+
+    // Get or create array
+    JsonArray networks;
+    if (doc["networks"].is<JsonArray>()) {
+        networks = doc["networks"].as<JsonArray>();
+    } else {
+        networks = doc.createNestedArray("networks");
+    }
+
+    for (JsonObject net : networks) {
+        Serial.printf("Drawing %s\n", net["ssid"]);
+        if (!strlen(net["ssid"]))
+            continue;
+        lv_obj_t *item = lv_list_add_btn(saved_networks_container, NULL, net["ssid"]);
+        lv_obj_add_flag(item, LV_OBJ_FLAG_CHECKABLE);
+        lv_label_set_long_mode(lv_obj_get_child(item, 0), LV_LABEL_LONG_WRAP);
+        lv_obj_add_style(item, &style_container, LV_PART_MAIN);
+        lv_obj_add_style(item, &style_default_small, LV_PART_MAIN);
+        lv_obj_set_style_bg_color(item, lv_color_black(), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_color(item, color_default, LV_PART_MAIN | LV_STATE_CHECKED);
+        lv_obj_set_style_text_color(item, lv_color_black(), LV_PART_MAIN | LV_STATE_CHECKED);
+        lv_obj_add_event_cb(item, wifi_manager_item_event_cb, LV_EVENT_CLICKED, NULL);
+        //lv_obj_set_user_data(item, net["password"]);
+    }
+}
+
+void draw_wifi_manage_screen()
+{
+    lv_obj_t *screen = secondary_screens[WIFI_MANAGE_SCREEN];
+    lv_obj_t *wifi_manage_title_label = ui_add_title_label("Saved Networks", screen);   
+    lv_obj_t *content = ui_add_content_container(CONTENT_HEIGHT_BUTTONS, wifi_manage_title_label, screen);
+    saved_networks_container = lv_list_create(content);
+    lv_obj_align(saved_networks_container, LV_ALIGN_TOP_LEFT, 0, 0);
+    lv_obj_add_style(saved_networks_container, &style_container, LV_PART_MAIN);
+    lv_obj_set_width(saved_networks_container, INNER_CONTENT_WIDTH);
+
+    draw_saved_networks();
+    align_cfg_t btn_align = {0, 0, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_AUTO};
+    size_cfg_t btn_size = {40, 80};
+    lv_obj_t *btn_container = ui_add_button_row(screen);
+    lv_obj_t *settings_btn = ui_add_button(NULL, "Back", NULL, &style_default_small, back_button_cb, 
+        &btn_align, &btn_size, btn_container);   
+    btn_align.align = LV_ALIGN_TOP_MID;
+    lv_obj_t *scan_btn = ui_add_button(NULL, "Edit", NULL, &style_default_small, back_button_cb, 
+        &btn_align, &btn_size, btn_container);
+    btn_align.align = LV_ALIGN_TOP_RIGHT;
+    lv_obj_t *connect_btn = ui_add_button(NULL, "Delete", NULL, &style_default_small, back_button_cb, 
+        &btn_align, &btn_size, btn_container); 
+}
+
+void wifi_manage_button_cb(lv_event_t *e)
+{
+    if (monitor.sleeping)
+        return;
+    lv_event_code_t code = lv_event_get_code(e);
+    if (code == LV_EVENT_CLICKED) {    
+        lv_scr_load(secondary_screens[WIFI_MANAGE_SCREEN]);
+    }
+}
+
 void draw_wifi_settings_screen()
 {
     lv_obj_t *screen = secondary_screens[WIFI_SETTINGS_SCREEN];
@@ -185,6 +287,9 @@ void draw_wifi_settings_screen()
     lv_obj_t *btn_container = ui_add_button_row(screen);
     lv_obj_t *settings_btn = ui_add_button(NULL, "Back", NULL, &style_default_small, back_button_cb, 
         &btn_align, &btn_size, btn_container);    
+    btn_align.align = LV_ALIGN_TOP_RIGHT;
+    lv_obj_t *connect_btn = ui_add_button(NULL, "Manage", NULL, &style_default_small, wifi_manage_button_cb, 
+        &btn_align, &btn_size, btn_container);
 }
 
 void wifi_scan_btn_cb(lv_event_t *e)

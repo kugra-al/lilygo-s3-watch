@@ -124,7 +124,8 @@ void update_gps_stats(unsigned long ms)
         lv_label_set_text_fmt(gps_altitude_label, "%.2fm", instance.gps.altitude.isValid() ? instance.gps.altitude.meters() : 0);
         if (instance.gps.time.isValid()) 
             lv_label_set_text_fmt(gps_time_label, "%02d:%02d:%02d", instance.gps.time.hour(), instance.gps.time.minute(), instance.gps.time.second());
-        // GPS starts enabled to get time, but once we get location data, turn it off to save battery
+        // GPS starts enabled to get time, but once we get location data, turn it off to save battery. Though we only need time, we get that with a weak signal
+        //  but location takes a bit longer
         if (instance.gps.location.isValid()) {
             // If we manually toggled it, don't turn it off
             if (!gps_manually_toggled) {
