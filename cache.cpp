@@ -99,7 +99,7 @@ bool read_JSON(const char *path, DynamicJsonDocument &doc)
     return true;
 }
 
-bool save_wifi_to_file(const char *ssid, const char *password) 
+bool save_wifi_to_file(const char *ssid, const char *password, bool delete_ssid = false) 
 {
     const char *wifi_file = "/wifi.json";
     DynamicJsonDocument doc(WIFI_BYTES);
@@ -124,14 +124,20 @@ bool save_wifi_to_file(const char *ssid, const char *password)
     }
 
     // Try update existing
-    for (JsonObject net : networks) {
+    for (size_t i = 0; i < networks.size(); i++) {
+        JsonObject net = networks[i];
         if (strcmp(net["ssid"] | "", ssid) == 0) {
-            net["password"] = password;              // update here
+            if (delete_ssid)
+                networks.remove(i);
+            else
+                net["password"] = password;              // update here
             Serial.println("Network updated");
             Serial.println("Final JSON:");
             serializeJsonPretty(doc, Serial);
             Serial.println();
-            return write_JSON(wifi_file, doc);       // overwrite file with updated doc
+            bool save = write_JSON(wifi_file, doc); 
+            draw_saved_networks();
+            return save;       // overwrite file with updated doc
         }
     }
 
@@ -144,8 +150,9 @@ bool save_wifi_to_file(const char *ssid, const char *password)
     Serial.println("Final JSON:");
     serializeJsonPretty(doc, Serial);
     Serial.println();
-
-    return write_JSON(wifi_file, doc);
+    bool save = write_JSON(wifi_file, doc); 
+    draw_saved_networks();
+    return save;
 }
 
 void check_cache_key_length(const char *key) {

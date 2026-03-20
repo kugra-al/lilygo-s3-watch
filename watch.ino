@@ -70,7 +70,7 @@ static void check_wifi()
     Serial.println("Wifi check");
     if (!monitor.wifi_connected) {
         if (!saved_defined_network) {
-            save_wifi_to_file(WIFI_SSID, WIFI_PASSWORD);
+            save_wifi_to_file(WIFI_SSID, WIFI_PASSWORD, false);
             saved_defined_network = true;
         }
         lv_style_set_text_color(&style_wifi, color_red);

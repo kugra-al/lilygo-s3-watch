@@ -1,8 +1,9 @@
+#include "widgets/list/lv_list.h"
 #include "ui_screens.h"
 
 static lv_obj_t *wifi_password_text;
 char wifi_ssid_selected[33];
-char wifi_manager_ssid_selected[33];
+lv_obj_t *wifi_manager_ssid_selected_btn;
 
 lv_obj_t *wifi_scan_container;
 lv_obj_t *wifi_input_box;
@@ -102,7 +103,7 @@ void kb_event_cb(lv_event_t *e)
         Serial.printf("Pass: %s\n", wifi_password);  
         Serial.printf("SSID: %s\n", wifi_ssid_selected);
         WiFi.begin(wifi_ssid_selected, wifi_password);
-        save_wifi_to_file(wifi_ssid_selected, wifi_password);            
+        save_wifi_to_file(wifi_ssid_selected, wifi_password, false);            
         lv_obj_delete(kb);                                    
         lv_obj_delete(wifi_input_box);
         return;
@@ -181,19 +182,14 @@ static void wifi_manager_item_event_cb(lv_event_t *e)
         }
     }
     Serial.println("After click");
-    lv_obj_t *ssid_label = lv_obj_get_child(clicked, 0);
-    if (ssid_label) {
-        const char *text = lv_list_get_btn_text(saved_networks_container, clicked);
-        Serial.printf("Selected: %s", text);
-        strncpy(wifi_manager_ssid_selected, text, 32);
-        wifi_manager_ssid_selected[32] = '\0';  // Force null termination
-
-    }
+    wifi_manager_ssid_selected_btn = clicked;
+       
     lv_obj_add_state(clicked, LV_STATE_CHECKED);
 }
 
 void draw_saved_networks()
 {
+    lv_obj_clean(saved_networks_container); 
     const char *wifi_file = "/wifi.json";
     DynamicJsonDocument doc(WIFI_BYTES);
 
@@ -229,7 +225,34 @@ void draw_saved_networks()
         lv_obj_set_style_bg_color(item, color_default, LV_PART_MAIN | LV_STATE_CHECKED);
         lv_obj_set_style_text_color(item, lv_color_black(), LV_PART_MAIN | LV_STATE_CHECKED);
         lv_obj_add_event_cb(item, wifi_manager_item_event_cb, LV_EVENT_CLICKED, NULL);
-        //lv_obj_set_user_data(item, net["password"]);
+        lv_obj_set_user_data(item, (void*)net["password"].as<const char*>());
+    }
+}
+
+void wifi_manage_delete_confirm_btn_cb(lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    if (code == LV_EVENT_CLICKED) {
+        const char *ssid_text = lv_list_get_button_text(saved_networks_container, wifi_manager_ssid_selected_btn);
+        const char *password = (const char *)lv_obj_get_user_data(wifi_manager_ssid_selected_btn);
+        if (strcmp(ssid_text, monitor.ssid.c_str()) == 0)
+            WiFi.disconnect(true);
+        save_wifi_to_file(ssid_text, password, true);
+        Serial.printf("Deleted saved network %s\n", ssid_text); 
+        return;
+    }
+}
+
+void wifi_manage_delete_btn_cb(lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    if (code == LV_EVENT_CLICKED) {
+        if (wifi_manager_ssid_selected_btn) {
+            const char *ssid_text = lv_list_get_button_text(saved_networks_container, wifi_manager_ssid_selected_btn);
+            char delete_txt[64];
+            sprintf(delete_txt, "Delete %s\n", ssid_text);
+            ui_show_confirm_box(delete_txt, wifi_manage_delete_confirm_btn_cb, "Delete", lv_screen_active());
+        }
     }
 }
 
@@ -250,10 +273,10 @@ void draw_wifi_manage_screen()
     lv_obj_t *settings_btn = ui_add_button(NULL, "Back", NULL, &style_default_small, back_button_cb, 
         &btn_align, &btn_size, btn_container);   
     btn_align.align = LV_ALIGN_TOP_MID;
-    lv_obj_t *scan_btn = ui_add_button(NULL, "Edit", NULL, &style_default_small, back_button_cb, 
+    lv_obj_t *edit_btn = ui_add_button(NULL, "Edit", NULL, &style_default_small, back_button_cb, 
         &btn_align, &btn_size, btn_container);
     btn_align.align = LV_ALIGN_TOP_RIGHT;
-    lv_obj_t *connect_btn = ui_add_button(NULL, "Delete", NULL, &style_default_small, back_button_cb, 
+    lv_obj_t *delete_btn = ui_add_button(NULL, "Delete", NULL, &style_default_small, wifi_manage_delete_btn_cb, 
         &btn_align, &btn_size, btn_container); 
 }
 

@@ -21,5 +21,5 @@ bool file_exists(const char *path);
 bool delete_file(const char *path);
 bool write_JSON(const char *path, DynamicJsonDocument &doc);
 bool read_JSON(const char *path, DynamicJsonDocument &doc);
-bool save_wifi_to_file(const char *ssid, const char *password);
+bool save_wifi_to_file(const char *ssid, const char *password, bool delete_ssid);
 void nvs_full_reset();
