@@ -49,7 +49,6 @@ int rssi_to_num(int rssi) {
     return 1;
 }
 
-// this crashes sometimes
 void ui_print_wifi_scan() {
     lv_obj_clean(wifi_scan_container);
     
@@ -82,7 +81,8 @@ void ui_print_wifi_scan() {
         lv_obj_set_style_bg_color(item, color_default, LV_PART_MAIN | LV_STATE_CHECKED);
         lv_obj_set_style_text_color(item, lv_color_black(), LV_PART_MAIN | LV_STATE_CHECKED);
         lv_obj_add_event_cb(item, wifi_item_event_cb, LV_EVENT_CLICKED, NULL);
-        lv_obj_set_user_data(item, (void*)scannedNetworks[i].ssid);
+        char *ssid_copy = strdup(scannedNetworks[i].ssid);
+        lv_obj_set_user_data(item, ssid_copy);
     }
 }
 

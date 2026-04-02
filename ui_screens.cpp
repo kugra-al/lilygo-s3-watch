@@ -606,7 +606,7 @@ static void settings_input_click_cb(lv_event_t * e)
         msgbox_data_t *mbox_data = (msgbox_data_t *)lv_obj_get_user_data(target_input);
         const char *title_text = (const char*)mbox_data->title;
         const char *default_text = lv_textarea_get_text(target_input);
-        settings_mbox = ui_show_input_box(title_text, default_text, lv_layer_top(), &settings_textarea);
+        settings_mbox = ui_show_input_box(title_text, default_text, secondary_screens[SETTINGS_SCREEN], &settings_textarea);
 
         lv_obj_set_user_data(settings_mbox, target_input);
         lv_keyboard_set_textarea(settings_keyboard, settings_textarea);

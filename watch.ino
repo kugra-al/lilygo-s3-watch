@@ -96,15 +96,20 @@ void setup()
     instance.onEvent([](DeviceEvent_t event, void *params, void * user_data) {
         if (instance.getPMUEventType(params) == PMU_EVENT_KEY_CLICKED) {
             last_event = millis();
-            if (monitor.sleeping)
-                wakeup();
-            else {
-                switch_to_screen(CLOCK_SCREEN);
-            }
             Serial.println("Power button pressed");
+            if (monitor.sleeping) {
+                wakeup();
+                return;
+            } else {
+                if (current_screen != CLOCK_SCREEN && !torch_active) {
+                    switch_to_screen(CLOCK_SCREEN);
+                    return;
+                }
+            }
             if (millis() - last_button_click <= ONE_SECOND) {
                 Serial.println("Double click detected");
                 fake_sleep();
+                return;
             }
             last_button_click = millis();
         } else if (instance.getPMUEventType(params) == PMU_EVENT_KEY_LONG_PRESSED) {
