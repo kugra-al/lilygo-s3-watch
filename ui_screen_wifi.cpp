@@ -102,7 +102,9 @@ void kb_event_cb(lv_event_t *e)
         const char *wifi_password = lv_textarea_get_text(wifi_password_text);     
         Serial.printf("Pass: %s\n", wifi_password);  
         Serial.printf("SSID: %s\n", wifi_ssid_selected);
-        WiFi.begin(wifi_ssid_selected, wifi_password);
+        bool is_manage_event = (bool)(uintptr_t)lv_event_get_user_data(e);
+        if (!is_manage_event)
+            WiFi.begin(wifi_ssid_selected, wifi_password);
         save_wifi_to_file(wifi_ssid_selected, wifi_password, false);            
         lv_obj_delete(kb);                                    
         lv_obj_delete(wifi_input_box);
@@ -110,10 +112,14 @@ void kb_event_cb(lv_event_t *e)
     }
 }
 
-lv_obj_t *show_wifi_input_box()
+lv_obj_t *show_wifi_input_box(bool is_manage_event)
 {
     /* Modal message box */
-    lv_obj_t *mbox = lv_msgbox_create(screens[current_screen]);                                            
+    lv_obj_t *mbox;
+    if (is_manage_event)
+        mbox = lv_msgbox_create(secondary_screens[WIFI_MANAGE_SCREEN]);
+    else
+        mbox = lv_msgbox_create(screens[current_screen]);                                            
     //lv_msgbox_add_text(mbox, "Password:");                     
     lv_obj_set_width(mbox, 220);
     /* Content area of msgbox */
@@ -137,10 +143,15 @@ void wifi_connect_button_cb(lv_event_t *e)
         return;
     lv_event_code_t code = lv_event_get_code(e);
     lv_obj_t *btn = lv_event_get_target_obj(e);
+    bool is_manage_event = (bool)(uintptr_t)lv_event_get_user_data(e);
     if (code == LV_EVENT_CLICKED) {
         if (!strlen(wifi_ssid_selected))
             return;
-        lv_obj_t *keyboard = lv_keyboard_create(screens[current_screen]);
+        lv_obj_t *keyboard;
+        if (is_manage_event)
+            keyboard = lv_keyboard_create(secondary_screens[WIFI_MANAGE_SCREEN]);
+        else
+            keyboard = lv_keyboard_create(screens[current_screen]);
         lv_obj_add_style(keyboard, &style_keyboard, LV_PART_MAIN);
         lv_obj_add_style(keyboard, &style_keyboard, LV_PART_ITEMS);
         lv_obj_add_style(keyboard, &style_keyboard, LV_PART_ITEMS | LV_STATE_PRESSED);
@@ -148,12 +159,12 @@ void wifi_connect_button_cb(lv_event_t *e)
         lv_obj_add_style(keyboard, &style_keyboard, LV_PART_ITEMS | LV_STATE_FOCUSED);
         lv_obj_add_style(keyboard, &style_keyboard, LV_PART_ITEMS | LV_STATE_DISABLED);
         /* Send characters into our textarea */
-        wifi_input_box = show_wifi_input_box();
+        wifi_input_box = show_wifi_input_box(is_manage_event);
         const char *saved_password = get_wifi_password_for_ssid(wifi_ssid_selected);
         if (saved_password)
             lv_textarea_set_text(wifi_password_text, saved_password);
         lv_keyboard_set_textarea(keyboard, wifi_password_text);
-        lv_obj_add_event_cb(keyboard, kb_event_cb, LV_EVENT_ALL, NULL);
+        lv_obj_add_event_cb(keyboard, kb_event_cb, LV_EVENT_ALL, (void *)(uintptr_t)is_manage_event);
         Serial.println("Connect button clicked");
     }
 }
@@ -183,6 +194,13 @@ static void wifi_manager_item_event_cb(lv_event_t *e)
     }
     Serial.println("After click");
     wifi_manager_ssid_selected_btn = clicked;
+    lv_obj_t *ssid_label = lv_obj_get_child(clicked, 0);
+    if (ssid_label) {
+        const char *text = (const char *)lv_label_get_text(ssid_label);
+        strncpy(wifi_ssid_selected, text, 32);
+        wifi_ssid_selected[32] = '\0';  // Force null termination
+
+    }
        
     lv_obj_add_state(clicked, LV_STATE_CHECKED);
 }
@@ -270,11 +288,12 @@ void draw_wifi_manage_screen()
     align_cfg_t btn_align = {0, 0, LV_ALIGN_TOP_LEFT, LV_TEXT_ALIGN_AUTO};
     size_cfg_t btn_size = {40, 80};
     lv_obj_t *btn_container = ui_add_button_row(screen);
-    lv_obj_t *settings_btn = ui_add_button(NULL, "Back", NULL, &style_default_small, back_button_cb, 
+    lv_obj_t *back_btn = ui_add_button(NULL, "Back", NULL, &style_default_small, back_button_cb, 
         &btn_align, &btn_size, btn_container);   
     btn_align.align = LV_ALIGN_TOP_MID;
-    lv_obj_t *edit_btn = ui_add_button(NULL, "Edit", NULL, &style_default_small, back_button_cb, 
+    lv_obj_t *edit_btn = ui_add_button(NULL, "Edit", NULL, &style_default_small, NULL, 
         &btn_align, &btn_size, btn_container);
+    lv_obj_add_event_cb(edit_btn, wifi_connect_button_cb, LV_EVENT_ALL, (void *)(uintptr_t)true);
     btn_align.align = LV_ALIGN_TOP_RIGHT;
     lv_obj_t *delete_btn = ui_add_button(NULL, "Delete", NULL, &style_default_small, wifi_manage_delete_btn_cb, 
         &btn_align, &btn_size, btn_container); 

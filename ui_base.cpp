@@ -161,7 +161,8 @@ lv_obj_t *ui_add_button(char *cache_key, char *default_text, lv_obj_t *align_to_
 {
     lv_obj_t *btn = lv_button_create(screen);            /*Add a button the current screen*/
     lv_obj_set_size(btn, sizes->width, sizes->height);                          /*Set its size*/
-    lv_obj_add_event_cb(btn, callback, LV_EVENT_ALL, NULL);  /*Assign a callback to the button*/
+    if (callback)
+        lv_obj_add_event_cb(btn, callback, LV_EVENT_ALL, (void *)(uintptr_t)false);  /*Assign a callback to the button*/
     if (align_to_obj)
         lv_obj_align_to(btn, align_to_obj, aligns->align, aligns->x, aligns->y);
     else
